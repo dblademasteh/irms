@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/socket_client.dart';
+import '../core/notification_service.dart';
 import '../app/theme.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/pages/login_page.dart';
@@ -163,6 +164,8 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
 
     if (targetRole == 'dispatchers' && !isDispatcherUser) return;
     if (targetRole == 'reporters' && isDispatcherUser) return;
+
+    NotificationService.notifyEmergencyBroadcast(author: author, message: msg);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
