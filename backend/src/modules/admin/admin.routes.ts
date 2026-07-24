@@ -119,7 +119,11 @@ export async function registerAdminRoutes(app: FastifyInstance) {
       const role = req.user!.role;
       const broadcasts = await repo.getBroadcasts();
       if (role === "admin" || role === "dispatcher") return { broadcasts };
-      return { broadcasts: broadcasts.filter((b) => b.target_role === "all" || b.target_role === "reporters") };
+      return {
+        broadcasts: broadcasts.filter(
+          (b) => !b.target_role || b.target_role === "all" || b.target_role === "reporters"
+        ),
+      };
     }
   );
 

@@ -117050,14 +117050,17 @@ $S:0}
 A.Xa.prototype={}
 A.N4.prototype={
 qU(a,b){return this.aPq(a,b)},
-aPq(a,b){var s=0,r=A.q(t.H),q=this,p,o
+aPq(a,b){var s=0,r=A.q(t.H),q=this,p,o,n
 var $async$qU=A.r(function(c,d){if(c===1)return A.n(d,r)
-for(;;)switch(s){case 0:s=2
+for(;;)switch(s){case 0:n=a.cy
+s=!(B.c.n(n,"/auth/login")||B.c.n(n,"/auth/register")||B.c.n(n,"/auth/refresh")||B.c.n(n,"/auth/reset-password"))?2:3
+break
+case 2:s=4
 return A.l(q.a.rg(),$async$qU)
-case 2:o=d
-if(o!=null){p=a.b
-p===$&&A.a()
-p.m(0,"Authorization","Bearer "+o)}b.ud(0,a)
+case 4:p=d
+if(p!=null){o=a.b
+o===$&&A.a()
+o.m(0,"Authorization","Bearer "+p)}case 3:b.ud(0,a)
 return A.o(null,r)}})
 return A.p($async$qU,r)},
 jz(a,b,c){return this.aP7(0,b,c)},
