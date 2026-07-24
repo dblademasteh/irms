@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class _TextScale {
@@ -221,6 +222,12 @@ class IrmsTheme {
       scrolledUnderElevation: 0,
       backgroundColor: IrmsColors.surface,
       surfaceTintColor: Colors.transparent,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.transparent,
+      ),
       shape: const Border(bottom: BorderSide(color: IrmsColors.border, width: 1)),
       foregroundColor: IrmsColors.fg,
       titleTextStyle: TextStyle(
@@ -325,6 +332,12 @@ class IrmsTheme {
       scrolledUnderElevation: 0,
       backgroundColor: IrmsColors.surfaceDark,
       surfaceTintColor: Colors.transparent,
+      systemOverlayStyle: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: Colors.transparent,
+      ),
       shape: const Border(bottom: BorderSide(color: IrmsColors.borderDark, width: 1)),
       foregroundColor: Colors.white,
       titleTextStyle: TextStyle(
