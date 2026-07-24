@@ -712,10 +712,12 @@ class _AnnouncementCard extends StatelessWidget {
           width: isPinned ? 1.5 : 1,
         ),
       ),
-      child: InkWell(
-        onTap: () => showAnnouncementDetailModal(context, announcement),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: InkWell(
+          onTap: () => showAnnouncementDetailModal(context, announcement),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -796,7 +798,8 @@ class _AnnouncementCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 
