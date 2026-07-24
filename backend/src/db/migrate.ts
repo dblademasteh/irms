@@ -15,7 +15,16 @@ async function main() {
   for (const file of files) {
     const sql = fs.readFileSync(path.join(dir, file), "utf8");
     console.log(`[migrate] applying ${file}`);
-    await pool.query(sql);
+    try {
+      await pool.query(sql);
+    } catch (err: any) {
+      if (err.code === "42P07" || err.code === "42701" || err.code === "42710") {
+        console.log(`[migrate] skipping ${file}: ${err.code} (${err.message?.split("\n")[0]})`);
+      } else {
+        console.error(`[migrate] error in ${file}:`, err.message);
+        process.exit(1);
+      }
+    }
   }
   console.log("[migrate] done");
   await pool.end();
