@@ -3,7 +3,13 @@ import 'package:flutter/foundation.dart';
 
 class NetworkDiscovery {
   static Future<String> detect() async {
-    if (kIsWeb) return 'https://api.devbry.online';
+    if (kIsWeb) {
+      final host = Uri.base.host;
+      if (host == 'localhost' || host == '127.0.0.1' || host.isEmpty) {
+        return 'http://localhost:4000';
+      }
+      return 'https://api.devbry.online';
+    }
 
     final backend = await _scanForBackend();
     if (backend != null) return backend;
