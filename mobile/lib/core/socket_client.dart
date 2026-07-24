@@ -1,5 +1,6 @@
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'storage.dart';
+import 'notifications/notification_helper.dart';
 
 class SocketClient {
   final SecureStorage _storage;
@@ -25,6 +26,8 @@ class SocketClient {
       }
 
       print('[socket] initializing connection to $_baseUrl');
+      AppNotificationService.requestPermission();
+
       _socket = io.io(_baseUrl, <String, dynamic>{
         'auth': {'token': token},
         'transports': ['websocket'],
@@ -36,6 +39,21 @@ class SocketClient {
       });
       _socket!.onDisconnect((_) => print('[socket] disconnected'));
       _socket!.onError((err) => print('[socket] error: $err'));
+
+      _socket!.on('system:broadcast', (data) {
+        if (data != null && data is Map) {
+          final msg = data['message']?.toString() ?? 'New emergency alert';
+          AppNotificationService.show('📢 System Broadcast', msg);
+        }
+      });
+
+      _socket!.on('queue:new_incident', (data) {
+        if (data != null && data is Map) {
+          final title = data['title']?.toString() ?? 'Emergency Incident';
+          final type = data['type']?.toString() ?? 'Report';
+          AppNotificationService.show('🚨 New Incident Reported ($type)', title);
+        }
+      });
 
       // Bind all accumulated event listeners to the new socket instance
       _listeners.forEach((event, handlers) {
