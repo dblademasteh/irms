@@ -48,11 +48,16 @@ export async function createBroadcast(input: {
 }
 
 export async function getBroadcasts(limit = 50): Promise<BroadcastRow[]> {
-  const { rows } = await query<BroadcastRow>(
-    `SELECT * FROM broadcasts ORDER BY created_at DESC LIMIT $1`,
-    [limit]
-  );
-  return rows;
+  try {
+    const { rows } = await query<BroadcastRow>(
+      `SELECT * FROM broadcasts ORDER BY created_at DESC LIMIT $1`,
+      [limit]
+    );
+    return rows;
+  } catch (err) {
+    console.error("[admin.repo] getBroadcasts error:", err);
+    return [];
+  }
 }
 
 export async function getDispatchUnits() {

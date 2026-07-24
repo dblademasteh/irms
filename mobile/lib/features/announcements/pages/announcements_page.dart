@@ -40,7 +40,12 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
     setState(() { _loading = true; _error = null; });
     try {
       final dio = context.read<DioClient>();
-      final resp = await dio.dio.get('/admin/broadcasts');
+      dynamic resp;
+      try {
+        resp = await dio.dio.get('/admin/broadcasts');
+      } catch (_) {
+        resp = await dio.dio.get('/broadcasts');
+      }
       final list = List<Map<String, dynamic>>.from(resp.data['broadcasts'] ?? []);
       setState(() {
         _announcements.clear();
@@ -57,7 +62,10 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
         _loading = false;
       });
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() {
+        _loading = false;
+        // Keep existing alerts if any, or clear loading state
+      });
     }
   }
 

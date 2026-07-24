@@ -112,20 +112,19 @@ export async function registerAdminRoutes(app: FastifyInstance) {
     }
   );
 
-  app.get(
-    "/admin/broadcasts",
-    { preHandler: optionalAuthGuard() },
-    async (req) => {
-      const role = req.user?.role ?? "reporter";
-      const broadcasts = await repo.getBroadcasts();
-      if (role === "admin" || role === "dispatcher") return { broadcasts };
-      return {
-        broadcasts: broadcasts.filter(
-          (b) => !b.target_role || b.target_role === "all" || b.target_role === "reporters"
-        ),
-      };
-    }
-  );
+  const getBroadcastsHandler = async (req: any) => {
+    const role = req.user?.role ?? "reporter";
+    const broadcasts = await repo.getBroadcasts();
+    if (role === "admin" || role === "dispatcher") return { broadcasts };
+    return {
+      broadcasts: broadcasts.filter(
+        (b) => !b.target_role || b.target_role === "all" || b.target_role === "reporters"
+      ),
+    };
+  };
+
+  app.get("/admin/broadcasts", { preHandler: optionalAuthGuard() }, getBroadcastsHandler);
+  app.get("/broadcasts", { preHandler: optionalAuthGuard() }, getBroadcastsHandler);
 
   app.get(
     "/admin/broadcast-templates",
