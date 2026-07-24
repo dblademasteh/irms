@@ -1,0 +1,13 @@
+node_modules
+dist
+.env
+debug.log
+*.ts
+!src/**/*.ts
+!migrations/**/*.ts
+list_admins.ts
+reset_pwd.ts
+scripts
+.vscode
+.git
+docker-compose.yml

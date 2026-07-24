@@ -1,0 +1,35 @@
+node_modules/
+dist/
+.env
+debug.log
+*.log
+server.log
+
+# Flutter mobile build artifacts
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/local.properties
+mobile/ios/
+mobile/linux/flutter/ephemeral/
+mobile/macos/
+mobile/windows/
+mobile/.metadata
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scripts outside src
+backend/list_admins.ts
+backend/reset_pwd.ts
+backend/debug.log
+backend/server.log
+backend/scripts/
