@@ -340,7 +340,7 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
   Widget build(BuildContext context) {
     final dests = _destinations(context);
     final theme = Theme.of(context);
-    final isWideScreen = MediaQuery.of(context).size.width >= 800;
+    final isWideScreen = MediaQuery.of(context).size.width >= 1100;
 
     if (isWideScreen) {
       final selectedIndex = _currentIndex(context);
@@ -524,7 +524,7 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
-            margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface.withValues(alpha: 0.92),
