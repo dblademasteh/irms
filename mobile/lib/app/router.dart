@@ -171,36 +171,48 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
     final announcementData = Map<String, dynamic>.from(data is Map ? data : {});
     if (!announcementData.containsKey('title')) announcementData['title'] = 'LIVE BROADCAST ALERT';
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.campaign, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('BROADCAST FROM ${author.toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Colors.white70)),
-                  Text(msg, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white), maxLines: 2, overflow: TextOverflow.ellipsis),
-                ],
-              ),
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        backgroundColor: Theme.of(context).colorScheme.errorContainer,
+        icon: Icon(Icons.campaign, color: Theme.of(context).colorScheme.error, size: 32),
+        title: Text(
+          'BROADCAST FROM ${author.toUpperCase()}',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w900,
+            color: Theme.of(context).colorScheme.error,
+            letterSpacing: 0.8,
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: SelectableText(
+            msg,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              height: 1.5,
             ),
-          ],
+          ),
         ),
-        action: SnackBarAction(
-          label: 'VIEW',
-          textColor: Colors.white,
-          onPressed: () {
-            showAnnouncementDetailModal(context, announcementData);
-          },
-        ),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 8),
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Close',
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
+            ),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              showAnnouncementDetailModal(context, announcementData);
+            },
+            child: const Text('View Details'),
+          ),
+        ],
       ),
     );
   }
