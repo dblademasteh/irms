@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 
 class NetworkDiscovery {
   static Future<String> detect() async {
-    if (kIsWeb) return 'http://localhost:4000';
+    if (kIsWeb) return 'http://49.150.192.176:4000';
 
     final backend = await _scanForBackend();
     if (backend != null) return backend;
