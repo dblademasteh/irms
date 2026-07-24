@@ -11,16 +11,11 @@ COPY . .
 
 FROM node:20-alpine
 
-RUN apk add --no-cache tini
+RUN apk add --no-cache tini curl
 
 RUN addgroup -S irms && adduser -S irms -G irms
 
 WORKDIR /app
-
-ENV PG_PORT=5432
-ENV PG_DATABASE=postgres
-ENV PG_USER=postgres
-ENV REDIS_PORT=6379
 
 ENV PG_HOST=o12udbauba2yuuxjdyfhnl3x
 ENV PG_PORT=5432
@@ -41,7 +36,7 @@ USER irms
 EXPOSE 4000
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-  CMD wget -qO- http://localhost:4000/health || exit 1
+  CMD curl -sf http://localhost:4000/health || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
 
