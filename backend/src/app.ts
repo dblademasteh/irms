@@ -40,6 +40,15 @@ async function build() {
     decorateReply: false,
   });
 
+  app.addContentTypeParser("application/x-www-form-urlencoded", { parseAs: "string" }, (req, body: string, done) => {
+    try {
+      const parsed = Object.fromEntries(new URLSearchParams(body));
+      done(null, parsed);
+    } catch (err: any) {
+      done(err, undefined);
+    }
+  });
+
   app.setErrorHandler((err, req, reply) => {
     if (err instanceof AppError) {
       return reply.code(err.status).send({ error: err.code, message: err.message });

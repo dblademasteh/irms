@@ -337,25 +337,38 @@ export async function registerIncidentRoutes(app: FastifyInstance) {
     }
   );
 
-  app.post("/incidents/sms-webhook", async (req, reply) => {
-    const smsSchema = z.object({
-      from: z.string().min(1),
-      message: z.string().min(1),
-      location: z.string().optional(),
-    });
-    const body = smsSchema.parse(req.body);
-    const parsedType = body.message.toLowerCase().includes("fire") ? "fire"
-      : body.message.toLowerCase().includes("accident") ? "accident"
-      : body.message.toLowerCase().includes("crime") ? "crime"
-      : body.message.toLowerCase().includes("medical") ? "medical"
+  const handleSmsWebhook = async (req: any, reply: any) => {
+    const query = typeof req.query === "object" && req.query ? req.query : {};
+    const body = typeof req.body === "object" && req.body ? req.body : {};
+    const data = { ...query, ...body };
+
+    const rawFrom = data.from ?? data.From ?? data.sender ?? data.phone ?? data.number ?? data.reporterPhone ?? data.reporter_phone ?? data.mobile;
+    const rawMessage = data.message ?? data.Message ?? data.text ?? data.Text ?? data.body ?? data.Body ?? data.content ?? data.description;
+    const rawLocation = data.location ?? data.Location ?? data.address ?? data.Address ?? data.loc;
+
+    if (!rawFrom || typeof rawFrom !== "string" || !rawFrom.trim()) {
+      throw errors.badRequest("Missing sender phone number (expected 'from', 'From', 'sender', 'phone', or 'number')");
+    }
+    if (!rawMessage || typeof rawMessage !== "string" || !rawMessage.trim()) {
+      throw errors.badRequest("Missing SMS message text (expected 'message', 'Body', 'text', or 'content')");
+    }
+
+    const from = String(rawFrom).trim();
+    const message = String(rawMessage).trim();
+    const location = typeof rawLocation === "string" && rawLocation.trim() ? rawLocation.trim() : undefined;
+
+    const parsedType = message.toLowerCase().includes("fire") ? "fire"
+      : message.toLowerCase().includes("accident") ? "accident"
+      : message.toLowerCase().includes("crime") ? "crime"
+      : message.toLowerCase().includes("medical") ? "medical"
       : "natural_disaster";
 
     const incident = await repo.createIncident({
       type: parsedType,
-      title: `SMS Report from ${body.from}`,
-      description: body.message,
-      reporterPhone: body.from,
-      address: body.location ?? "Received via SMS Gateway",
+      title: `SMS Report from ${from}`,
+      description: message,
+      reporterPhone: from,
+      address: location ?? "Received via SMS Gateway",
       isAnonymous: false,
     });
 
@@ -364,8 +377,12 @@ export async function registerIncidentRoutes(app: FastifyInstance) {
       ok: true,
       tracking_code: incident.tracking_code,
       message: `Report created successfully with tracking code: ${incident.tracking_code}`,
+      incident_id: incident.id,
     });
-  });
+  };
+
+  app.post("/incidents/sms-webhook", handleSmsWebhook);
+  app.get("/incidents/sms-webhook", handleSmsWebhook);
 
   app.post("/incidents/ai-classify", async (req, reply) => {
     const schema = z.object({
