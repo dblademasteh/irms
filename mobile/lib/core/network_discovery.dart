@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 
 class NetworkDiscovery {
   static Future<String> detect() async {
-    if (kIsWeb) return 'https://railway-britain-fifth-minnesota.trycloudflare.com';
+    if (kIsWeb) return 'https://floral-finger-erik-laid.trycloudflare.com';
 
     final backend = await _scanForBackend();
     if (backend != null) return backend;
