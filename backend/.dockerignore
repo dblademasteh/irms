@@ -2,6 +2,7 @@ node_modules
 dist
 .env
 debug.log
+*.log
 *.ts
 !src/**/*.ts
 !migrations/**/*.ts
@@ -11,3 +12,6 @@ scripts
 .vscode
 .git
 docker-compose.yml
+public/uploads/*
+server.err
+server.log
