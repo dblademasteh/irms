@@ -30,6 +30,7 @@ export const config = {
   redis: {
     host: str(process.env.REDIS_HOST, "localhost"),
     port: num(process.env.REDIS_PORT, 6379),
+    password: str(process.env.REDIS_PASSWORD, ""),
   },
   s3: {
     bucket: str(process.env.S3_BUCKET, "irms-media"),
