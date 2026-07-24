@@ -17,6 +17,11 @@ RUN addgroup -S irms && adduser -S irms -G irms
 
 WORKDIR /app
 
+ENV PG_PORT=5432
+ENV PG_DATABASE=postgres
+ENV PG_USER=postgres
+ENV REDIS_PORT=6379
+
 ENV PG_HOST=o12udbauba2yuuxjdyfhnl3x
 ENV PG_PORT=5432
 ENV PG_DATABASE=postgres
@@ -34,6 +39,9 @@ RUN mkdir -p public/uploads && chown -R irms:irms /app
 USER irms
 
 EXPOSE 4000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD wget -qO- http://localhost:4000/health || exit 1
 
 ENTRYPOINT ["/sbin/tini", "--"]
 
