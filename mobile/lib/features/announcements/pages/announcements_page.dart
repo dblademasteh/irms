@@ -261,6 +261,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                           'target_role': targetRole,
                         });
                         if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                        _loadBroadcasts();
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

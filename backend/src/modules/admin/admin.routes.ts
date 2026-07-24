@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
-import { authGuard } from "../common/auth-guard.js";
+import { authGuard, optionalAuthGuard } from "../common/auth-guard.js";
 import { errors } from "../common/errors.js";
 import * as repo from "./admin.repo.js";
 import { emitBroadcast } from "../realtime/realtime.js";
@@ -114,9 +114,9 @@ export async function registerAdminRoutes(app: FastifyInstance) {
 
   app.get(
     "/admin/broadcasts",
-    { preHandler: authGuard() },
+    { preHandler: optionalAuthGuard() },
     async (req) => {
-      const role = req.user!.role;
+      const role = req.user?.role ?? "reporter";
       const broadcasts = await repo.getBroadcasts();
       if (role === "admin" || role === "dispatcher") return { broadcasts };
       return {

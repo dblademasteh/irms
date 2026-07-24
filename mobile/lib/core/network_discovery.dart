@@ -5,8 +5,16 @@ class NetworkDiscovery {
   static Future<String> detect() async {
     if (kIsWeb) {
       final host = Uri.base.host;
-      if (host == 'localhost' || host == '127.0.0.1' || host.isEmpty) {
-        return 'http://localhost:4000';
+      final scheme = Uri.base.scheme.isNotEmpty ? Uri.base.scheme : 'http';
+
+      if (host == 'localhost' ||
+          host == '127.0.0.1' ||
+          host.startsWith('192.168.') ||
+          host.startsWith('10.') ||
+          host.startsWith('172.') ||
+          host.isEmpty) {
+        final targetHost = host.isEmpty ? 'localhost' : host;
+        return '$scheme://$targetHost:4000';
       }
       return 'https://api.devbry.online';
     }
