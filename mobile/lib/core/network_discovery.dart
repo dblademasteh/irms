@@ -9,6 +9,7 @@ class NetworkDiscovery {
     if (backend != null) return backend;
 
     final commonIPs = [
+      '10.0.2.2',
       '192.168.0.151',
       '192.168.1.1',
       '192.168.2.1',
@@ -22,7 +23,21 @@ class NetworkDiscovery {
       }
     }
 
+    if (await _isHostReachable('api.devbry.online', 443)) {
+      return 'https://api.devbry.online';
+    }
+
     return 'http://localhost:4000';
+  }
+
+  static Future<bool> _isHostReachable(String host, int port) async {
+    try {
+      final socket = await Socket.connect(host, port, timeout: const Duration(milliseconds: 500));
+      await socket.close();
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   static Future<String?> _scanForBackend() async {

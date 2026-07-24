@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 import 'package:dio/dio.dart';
 import '../../../app/router.dart';
 import '../../../core/storage.dart';
+import '../../../core/socket_client.dart';
 import '../repo/auth_repo.dart';
 
 abstract class AuthState extends Equatable {
@@ -28,7 +29,9 @@ class Unauthenticated extends AuthState {
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepo _authRepo;
   final SecureStorage _storage;
-  AuthCubit(this._authRepo, this._storage) : super(AuthInitial());
+  final SocketClient? _socketClient;
+
+  AuthCubit(this._authRepo, this._storage, [this._socketClient]) : super(AuthInitial());
 
   String _extractError(dynamic e) {
     if (e is DioException) {
@@ -47,10 +50,12 @@ class AuthCubit extends Cubit<AuthState> {
     if (user != null) {
       authNotifier.value = true;
       roleNotifier.value = user['role'] ?? 'reporter';
+      _socketClient?.connect();
       emit(Authenticated(user));
     } else {
       authNotifier.value = false;
       roleNotifier.value = 'reporter';
+      _socketClient?.disconnect();
       emit(Unauthenticated());
     }
   }
@@ -66,6 +71,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _storage.saveUser(result['user']);
       authNotifier.value = true;
       roleNotifier.value = result['user']['role'] ?? 'reporter';
+      _socketClient?.connect();
       emit(Authenticated(result['user']));
     } catch (e) {
       emit(Unauthenticated(error: _extractError(e)));
@@ -78,12 +84,14 @@ class AuthCubit extends Cubit<AuthState> {
     if (cachedUser != null && token != null) {
       authNotifier.value = true;
       roleNotifier.value = cachedUser['role'] ?? 'reporter';
+      _socketClient?.connect();
       emit(Authenticated(cachedUser));
     } else {
       // Fallback guest session when no previous token saved
       final guestUser = {'id': 'biometric-user', 'name': 'Biometric User', 'role': 'reporter'};
       authNotifier.value = true;
       roleNotifier.value = 'reporter';
+      _socketClient?.connect();
       emit(Authenticated(guestUser));
     }
   }
@@ -113,6 +121,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _storage.saveUser(result['user']);
       authNotifier.value = true;
       roleNotifier.value = result['user']['role'] ?? 'reporter';
+      _socketClient?.connect();
       emit(Authenticated(result['user']));
     } catch (e) {
       emit(Unauthenticated(error: _extractError(e)));
@@ -122,6 +131,7 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> logout() async {
     authNotifier.value = false;
     roleNotifier.value = 'reporter';
+    _socketClient?.disconnect();
     emit(Unauthenticated());
   }
 

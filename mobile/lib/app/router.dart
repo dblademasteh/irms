@@ -137,6 +137,7 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
   void initState() {
     super.initState();
     _socket = context.read<SocketClient>();
+    _socket.connect();
     _socket.onSystemBroadcast(_onBroadcast);
     _socket.onConnect(() {
       if (mounted) setState(() => _isOnline = true);

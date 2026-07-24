@@ -41,6 +41,7 @@ void main() async {
   if (token != null) {
     try {
       user = await authRepo.getCurrentUser();
+      socketClient.connect();
     } catch (e) {
       await storage.clearAll();
       user = null;
@@ -66,7 +67,7 @@ void main() async {
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
-            create: (_) => AuthCubit(authRepo, storage)..restoreSession(user),
+            create: (_) => AuthCubit(authRepo, storage, socketClient)..restoreSession(user),
           ),
           BlocProvider.value(value: localeCubit),
           BlocProvider.value(value: themeCubit),
