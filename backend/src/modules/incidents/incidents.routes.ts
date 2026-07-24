@@ -87,6 +87,63 @@ export async function registerIncidentRoutes(app: FastifyInstance) {
     }
   );
 
+  const handleSmsWebhook = async (req: any, reply: any) => {
+    const query = typeof req.query === "object" && req.query ? req.query : {};
+    const body = typeof req.body === "object" && req.body ? req.body : {};
+    const data = { ...query, ...body };
+
+    const rawFrom = data.from ?? data.From ?? data.sender ?? data.phone ?? data.number ?? data.reporterPhone ?? data.reporter_phone ?? data.mobile;
+    const rawMessage = data.message ?? data.Message ?? data.text ?? data.Text ?? data.body ?? data.Body ?? data.content ?? data.description;
+    const rawLocation = data.location ?? data.Location ?? data.address ?? data.Address ?? data.loc;
+
+    if (!rawFrom || typeof rawFrom !== "string" || !rawFrom.trim()) {
+      throw errors.badRequest("Missing sender phone number (expected 'from', 'From', 'sender', 'phone', or 'number')");
+    }
+    if (!rawMessage || typeof rawMessage !== "string" || !rawMessage.trim()) {
+      throw errors.badRequest("Missing SMS message text (expected 'message', 'Body', 'text', or 'content')");
+    }
+
+    const from = String(rawFrom).trim();
+    const message = String(rawMessage).trim();
+    const location = typeof rawLocation === "string" && rawLocation.trim() ? rawLocation.trim() : undefined;
+
+    const parsedType = message.toLowerCase().includes("fire") ? "fire"
+      : message.toLowerCase().includes("accident") ? "accident"
+      : message.toLowerCase().includes("crime") ? "crime"
+      : message.toLowerCase().includes("medical") ? "medical"
+      : "natural_disaster";
+
+    const incident = await repo.createIncident({
+      type: parsedType,
+      title: `SMS Report from ${from}`,
+      description: message,
+      reporterPhone: from,
+      address: location ?? "Received via SMS Gateway",
+      isAnonymous: false,
+    });
+
+    try {
+      await notifyDispatchers({
+        incidentId: incident.id,
+        title: "New SMS report",
+        body: `${incident.type} — ${incident.title}`,
+      });
+    } catch (e) {
+      console.error("[sms-webhook] notifyDispatchers error:", e);
+    }
+
+    emitQueueNew(incident);
+    return reply.code(201).send({
+      ok: true,
+      tracking_code: incident.tracking_code,
+      message: `Report created successfully with tracking code: ${incident.tracking_code}`,
+      incident_id: incident.id,
+    });
+  };
+
+  app.post("/incidents/sms-webhook", handleSmsWebhook);
+  app.get("/incidents/sms-webhook", handleSmsWebhook);
+
   app.get(
     "/incidents/queue",
     { preHandler: authGuard(["dispatcher", "admin"]) },
@@ -336,53 +393,6 @@ export async function registerIncidentRoutes(app: FastifyInstance) {
       return reply.send({ ok: true });
     }
   );
-
-  const handleSmsWebhook = async (req: any, reply: any) => {
-    const query = typeof req.query === "object" && req.query ? req.query : {};
-    const body = typeof req.body === "object" && req.body ? req.body : {};
-    const data = { ...query, ...body };
-
-    const rawFrom = data.from ?? data.From ?? data.sender ?? data.phone ?? data.number ?? data.reporterPhone ?? data.reporter_phone ?? data.mobile;
-    const rawMessage = data.message ?? data.Message ?? data.text ?? data.Text ?? data.body ?? data.Body ?? data.content ?? data.description;
-    const rawLocation = data.location ?? data.Location ?? data.address ?? data.Address ?? data.loc;
-
-    if (!rawFrom || typeof rawFrom !== "string" || !rawFrom.trim()) {
-      throw errors.badRequest("Missing sender phone number (expected 'from', 'From', 'sender', 'phone', or 'number')");
-    }
-    if (!rawMessage || typeof rawMessage !== "string" || !rawMessage.trim()) {
-      throw errors.badRequest("Missing SMS message text (expected 'message', 'Body', 'text', or 'content')");
-    }
-
-    const from = String(rawFrom).trim();
-    const message = String(rawMessage).trim();
-    const location = typeof rawLocation === "string" && rawLocation.trim() ? rawLocation.trim() : undefined;
-
-    const parsedType = message.toLowerCase().includes("fire") ? "fire"
-      : message.toLowerCase().includes("accident") ? "accident"
-      : message.toLowerCase().includes("crime") ? "crime"
-      : message.toLowerCase().includes("medical") ? "medical"
-      : "natural_disaster";
-
-    const incident = await repo.createIncident({
-      type: parsedType,
-      title: `SMS Report from ${from}`,
-      description: message,
-      reporterPhone: from,
-      address: location ?? "Received via SMS Gateway",
-      isAnonymous: false,
-    });
-
-    emitQueueNew(incident);
-    return reply.code(201).send({
-      ok: true,
-      tracking_code: incident.tracking_code,
-      message: `Report created successfully with tracking code: ${incident.tracking_code}`,
-      incident_id: incident.id,
-    });
-  };
-
-  app.post("/incidents/sms-webhook", handleSmsWebhook);
-  app.get("/incidents/sms-webhook", handleSmsWebhook);
 
   app.post("/incidents/ai-classify", async (req, reply) => {
     const schema = z.object({
