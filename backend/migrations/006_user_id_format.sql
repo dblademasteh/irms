@@ -3,9 +3,19 @@ ALTER TABLE incidents DROP CONSTRAINT IF EXISTS incidents_reporter_id_fkey;
 ALTER TABLE incidents DROP CONSTRAINT IF EXISTS incidents_dispatcher_id_fkey;
 ALTER TABLE notifications DROP CONSTRAINT IF EXISTS notifications_user_id_fkey;
 ALTER TABLE action_log DROP CONSTRAINT IF EXISTS action_log_actor_id_fkey;
-ALTER TABLE broadcasts DROP CONSTRAINT IF EXISTS broadcasts_author_id_fkey;
-ALTER TABLE chats DROP CONSTRAINT IF EXISTS chats_user_id_fkey;
-ALTER TABLE api_keys DROP CONSTRAINT IF EXISTS api_keys_user_id_fkey;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'broadcasts') THEN
+    ALTER TABLE broadcasts DROP CONSTRAINT IF EXISTS broadcasts_author_id_fkey;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'chats') THEN
+    ALTER TABLE chats DROP CONSTRAINT IF EXISTS chats_user_id_fkey;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'api_keys') THEN
+    ALTER TABLE api_keys DROP CONSTRAINT IF EXISTS api_keys_user_id_fkey;
+  END IF;
+END $$;
 
 -- 2. Alter columns from UUID to TEXT
 ALTER TABLE users ALTER COLUMN id TYPE TEXT USING id::text;
