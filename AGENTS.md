@@ -76,3 +76,4 @@ These are referenced by `skills-lock.json` and provide specialized guidance for:
 - **No root-level task runner** — each project is run independently
 - Mobile uses `NetworkDiscovery` to auto-detect backend URL at startup (for connecting to local dev backend on same network)
 - Backend CORS defaults to `*` in dev; mobile runs on whatever port Flutter assigns (auto-selected)
+- **Git Workflow:** Always commit and push code changes to `origin/main` (or active branch) after completing and verifying a task.
