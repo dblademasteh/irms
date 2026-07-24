@@ -357,7 +357,7 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
         body: Row(
           children: [
             Container(
-              width: 76,
+              width: 60,
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 border: Border(
@@ -368,19 +368,19 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
               ),
               child: Column(
                 children: [
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.shield, color: theme.colorScheme.primary, size: 26),
+                    child: Icon(Icons.shield, color: theme.colorScheme.primary, size: 22),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 18),
                   Expanded(
                     child: ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 6),
                       children: [
                         _SidebarItem(
                           icon: Icons.dashboard_outlined,
@@ -441,14 +441,14 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                     ),
                   ),
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    margin: const EdgeInsets.symmetric(horizontal: 8),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.12 : 0.06),
                       borderRadius: BorderRadius.circular(2),
                     ),
                     height: 1,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   _SidebarItem(
                     icon: Icons.person_outline,
                     selectedIcon: Icons.person,
@@ -465,14 +465,14 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                     theme: theme,
                     showTopBorder: false,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: Column(
                       children: [
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 32,
+                          height: 32,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             gradient: LinearGradient(
@@ -484,23 +484,23 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                           child: Center(
                             child: Text(
                               initial,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15),
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
                             ),
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 3),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
                           decoration: BoxDecoration(
                             color: (role == 'admin' ? IrmsColors.error : theme.colorScheme.primary).withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(5),
                           ),
                           child: Text(
                             role.toUpperCase(),
                             style: TextStyle(
-                              fontSize: 8,
+                              fontSize: 7.5,
                               fontWeight: FontWeight.w800,
-                              letterSpacing: 0.8,
+                              letterSpacing: 0.6,
                               color: role == 'admin' ? IrmsColors.error : theme.colorScheme.primary,
                             ),
                           ),
@@ -518,28 +518,33 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
     }
 
     return Scaffold(
+      extendBody: true,
       body: widget.child,
       bottomNavigationBar: Builder(
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(20),
+              color: theme.colorScheme.surface.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.18 : 0.08),
+                width: 1,
+              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 6),
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.1),
+                  blurRadius: 18,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: SafeArea(
               top: false,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: List.generate(dests.length, (i) {
                   final dest = dests[i];
                   final isSelected = _currentIndex(context) == i;
@@ -550,39 +555,40 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                     onTap: () => _onTap(context, i),
                     behavior: HitTestBehavior.opaque,
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
+                      duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOutCubic,
                       padding: EdgeInsets.symmetric(
                         horizontal: isSelected ? 14 : 10,
-                        vertical: 8,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? theme.colorScheme.primary.withValues(alpha: 0.12)
+                            ? theme.colorScheme.primary.withValues(alpha: 0.14)
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Column(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             iconData,
-                            size: 22,
+                            size: 20,
                             color: isSelected
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                                : theme.colorScheme.onSurface.withValues(alpha: 0.45),
                           ),
-                          const SizedBox(height: 3),
-                          Text(
-                            dest.label,
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                              color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                          if (isSelected) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              dest.label,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: theme.colorScheme.primary,
+                                letterSpacing: 0.2,
+                              ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
