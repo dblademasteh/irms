@@ -1,5 +1,6 @@
 FROM nginx:alpine
 
+# Cache bust trigger v2: fresh web-dist COPY
 COPY web-dist /usr/share/nginx/html
 
 RUN echo 'server { \
