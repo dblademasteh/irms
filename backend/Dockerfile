@@ -17,6 +17,13 @@ RUN addgroup -S irms && adduser -S irms -G irms
 
 WORKDIR /app
 
+ENV PG_HOST=o12udbauba2yuuxjdyfhnl3x
+ENV PG_PORT=5432
+ENV PG_DATABASE=postgres
+ENV PG_USER=postgres
+ENV REDIS_HOST=upqpm50jdf1f6itk8atdaay9
+ENV REDIS_PORT=6379
+
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/src ./src
 COPY --from=build /app/migrations ./migrations
