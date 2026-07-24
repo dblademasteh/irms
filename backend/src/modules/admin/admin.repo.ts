@@ -61,15 +61,25 @@ export async function getBroadcasts(limit = 50): Promise<BroadcastRow[]> {
 }
 
 export async function getDispatchUnits() {
-  const { rows } = await query(`SELECT * FROM dispatch_units ORDER BY created_at DESC`);
-  return rows;
+  try {
+    const { rows } = await query(`SELECT * FROM dispatch_units ORDER BY created_at DESC`);
+    return rows;
+  } catch (err) {
+    console.error("[admin.repo] getDispatchUnits error:", err);
+    return [];
+  }
 }
 
 export async function getAvailableDispatchUnits() {
-  const { rows } = await query(
-    `SELECT * FROM dispatch_units WHERE status = 'available' ORDER BY name`
-  );
-  return rows;
+  try {
+    const { rows } = await query(
+      `SELECT * FROM dispatch_units WHERE status = 'available' ORDER BY name`
+    );
+    return rows;
+  } catch (err) {
+    console.error("[admin.repo] getAvailableDispatchUnits error:", err);
+    return [];
+  }
 }
 
 export async function createDispatchUnit(input: { name: string; unitType: string }) {
@@ -93,23 +103,30 @@ export async function deleteDispatchUnit(id: string) {
 }
 
 export async function getAnalytics() {
-  const [statusRes, typeRes, totalUsersRes, totalIncidentsRes, barangayRes] = await Promise.all([
-    query(`SELECT status, COUNT(*) as count FROM incidents GROUP BY status`),
-    query(`SELECT type, COUNT(*) as count FROM incidents GROUP BY type`),
-    query(`SELECT COUNT(*) as count FROM users`),
-    query(`SELECT COUNT(*) as count FROM incidents`),
-    query(`SELECT b.name, COUNT(i.id) as count
+  let barangayRows: any[] = [];
+  try {
+    const barangayRes = await query(`SELECT b.name, COUNT(i.id) as count
            FROM barangays b
            LEFT JOIN incidents i ON i.barangay_id = b.id
            GROUP BY b.name, b.sort_order
-           ORDER BY b.sort_order`),
+           ORDER BY b.sort_order`);
+    barangayRows = barangayRes.rows;
+  } catch (e) {
+    console.error("[admin.repo] barangayBreakdown query error:", e);
+  }
+
+  const [statusRes, typeRes, totalUsersRes, totalIncidentsRes] = await Promise.all([
+    query(`SELECT status, COUNT(*) as count FROM incidents GROUP BY status`).catch(() => ({ rows: [] })),
+    query(`SELECT type, COUNT(*) as count FROM incidents GROUP BY type`).catch(() => ({ rows: [] })),
+    query(`SELECT COUNT(*) as count FROM users`).catch(() => ({ rows: [{ count: "0" }] })),
+    query(`SELECT COUNT(*) as count FROM incidents`).catch(() => ({ rows: [{ count: "0" }] })),
   ]);
 
   return {
     statusBreakdown: statusRes.rows,
     typeBreakdown: typeRes.rows,
-    totalUsers: parseInt(totalUsersRes.rows[0].count, 10),
-    totalIncidents: parseInt(totalIncidentsRes.rows[0].count, 10),
-    barangayBreakdown: barangayRes.rows,
+    totalUsers: parseInt(totalUsersRes.rows[0]?.count ?? "0", 10),
+    totalIncidents: parseInt(totalIncidentsRes.rows[0]?.count ?? "0", 10),
+    barangayBreakdown: barangayRows,
   };
 }

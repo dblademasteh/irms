@@ -13,14 +13,27 @@ export interface ContactRow {
 const COLS = "ec.id, ec.name, ec.phone, ec.department, ec.category_id, ec.created_at, ec.updated_at";
 
 export async function listContacts(): Promise<any[]> {
-  const { rows } = await query(
-    `SELECT ec.id, ec.name, ec.phone, ec.department, ec.category_id, ec.created_at, ec.updated_at,
-            cc.name AS category_name, cc.icon AS category_icon, cc.color AS category_color
-     FROM emergency_contacts ec
-     LEFT JOIN contact_categories cc ON cc.id = ec.category_id
-     ORDER BY cc.sort_order ASC, ec.name ASC`
-  );
-  return rows;
+  try {
+    const { rows } = await query(
+      `SELECT ec.id, ec.name, ec.phone, ec.department, ec.category_id, ec.created_at, ec.updated_at,
+              cc.name AS category_name, cc.icon AS category_icon, cc.color AS category_color
+       FROM emergency_contacts ec
+       LEFT JOIN contact_categories cc ON cc.id = ec.category_id
+       ORDER BY COALESCE(cc.sort_order, 999) ASC, ec.name ASC`
+    );
+    return rows;
+  } catch (err: any) {
+    console.error("[contacts.repo] listContacts join query failed, trying basic query:", err);
+    try {
+      const { rows } = await query(
+        `SELECT id, name, phone, department, created_at, updated_at FROM emergency_contacts ORDER BY name ASC`
+      );
+      return rows;
+    } catch (err2: any) {
+      console.error("[contacts.repo] listContacts basic query failed:", err2);
+      return [];
+    }
+  }
 }
 
 export async function createContact(
