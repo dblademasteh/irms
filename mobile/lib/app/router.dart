@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/socket_client.dart';
 import '../core/notification_service.dart';
+import '../features/announcements/widgets/announcement_detail_modal.dart';
 import '../app/theme.dart';
 import 'package:go_router/go_router.dart';
 import '../features/auth/pages/login_page.dart';
@@ -167,6 +168,9 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
 
     NotificationService.notifyEmergencyBroadcast(author: author, message: msg);
 
+    final announcementData = Map<String, dynamic>.from(data is Map ? data : {});
+    if (!announcementData.containsKey('title')) announcementData['title'] = 'LIVE BROADCAST ALERT';
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -179,15 +183,22 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text('BROADCAST FROM ${author.toUpperCase()}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 10, color: Colors.white70)),
-                  Text(msg, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text(msg, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white), maxLines: 2, overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
           ],
         ),
+        action: SnackBarAction(
+          label: 'VIEW',
+          textColor: Colors.white,
+          onPressed: () {
+            showAnnouncementDetailModal(context, announcementData);
+          },
+        ),
         backgroundColor: Theme.of(context).colorScheme.error,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 6),
+        duration: const Duration(seconds: 8),
         margin: const EdgeInsets.all(16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),

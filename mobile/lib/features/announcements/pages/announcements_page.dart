@@ -5,6 +5,7 @@ import '../../../core/dio_client.dart';
 import '../../../app/router.dart';
 import 'package:intl/intl.dart';
 import '../../../app/theme.dart';
+import '../widgets/announcement_detail_modal.dart';
 
 class AnnouncementsPage extends StatefulWidget {
   const AnnouncementsPage({super.key});
@@ -694,6 +695,7 @@ class _AnnouncementCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(
@@ -701,76 +703,88 @@ class _AnnouncementCard extends StatelessWidget {
           width: isPinned ? 1.5 : 1,
         ),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: catColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: catColor.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    (announcement['category'] ?? 'INFO').toString().toUpperCase(),
-                    style: TextStyle(
-                      color: catColor,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5,
+      child: InkWell(
+        onTap: () => showAnnouncementDetailModal(context, announcement),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: catColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: catColor.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      (announcement['category'] ?? 'INFO').toString().toUpperCase(),
+                      style: TextStyle(
+                        color: catColor,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
-                ),
-                if (isPinned) ...[
-                  const SizedBox(width: 8),
-                  Icon(Icons.push_pin, size: 14, color: catColor),
+                  if (isPinned) ...[
+                    const SizedBox(width: 8),
+                    Icon(Icons.push_pin, size: 14, color: catColor),
+                  ],
+                  const Spacer(),
+                  Text(
+                    _formatTimestamp(announcement['timestamp']),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
                 ],
-                const Spacer(),
-                Text(
-                  _formatTimestamp(announcement['timestamp']),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              announcement['title'] ?? '',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                fontSize: 16,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              announcement['message'] ?? '',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                height: 1.4,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(Icons.account_circle_outlined, size: 16, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                const SizedBox(width: 6),
-                Text(
-                  announcement['author'] ?? 'Command Center',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
+              const SizedBox(height: 12),
+              Text(
+                announcement['title'] ?? '',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                announcement['message'] ?? '',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+                  height: 1.4,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Icon(Icons.account_circle_outlined, size: 16, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                  const SizedBox(width: 6),
+                  Text(
+                    announcement['author'] ?? 'Command Center',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'Read more →',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: catColor,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

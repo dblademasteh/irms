@@ -1,0 +1,171 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../../../app/theme.dart';
+
+void showAnnouncementDetailModal(BuildContext context, Map<String, dynamic> announcement) {
+  final theme = Theme.of(context);
+
+  final category = (announcement['category'] ?? 'emergency').toString();
+  final title = (announcement['title'] ?? 'BROADCAST ALERT').toString();
+  final message = (announcement['message'] ?? '').toString();
+  final author = (announcement['author'] ?? announcement['authorName'] ?? 'Command Center').toString();
+  final timestamp = (announcement['timestamp'] ?? '').toString();
+
+  Color catColor;
+  IconData catIcon;
+  switch (category.toLowerCase()) {
+    case 'emergency':
+      catColor = theme.colorScheme.error;
+      catIcon = Icons.warning_amber_rounded;
+      break;
+    case 'system':
+      catColor = theme.colorScheme.secondary;
+      catIcon = Icons.settings_outlined;
+      break;
+    case 'safety':
+      catColor = IrmsColors.success;
+      catIcon = Icons.health_and_safety_outlined;
+      break;
+    default:
+      catColor = theme.colorScheme.primary;
+      catIcon = Icons.campaign_outlined;
+  }
+
+  String formattedDate = '';
+  if (timestamp.isNotEmpty) {
+    try {
+      final dt = DateTime.parse(timestamp).toLocal();
+      formattedDate = DateFormat('EEEE, MMM d, y • h:mm a').format(dt);
+    } catch (_) {
+      formattedDate = timestamp;
+    }
+  }
+
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: theme.colorScheme.surface,
+      contentPadding: EdgeInsets.zero,
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 550, maxHeight: 600),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header Container with Category Theme Color
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: catColor.withValues(alpha: 0.1),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border(bottom: BorderSide(color: catColor.withValues(alpha: 0.2))),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: catColor.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(catIcon, color: catColor, size: 24),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: catColor.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            category.toUpperCase(),
+                            style: TextStyle(color: catColor, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 0.8),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          title,
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    icon: const Icon(Icons.close, size: 20),
+                  ),
+                ],
+              ),
+            ),
+
+            // Message Body
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SelectableText(
+                      message,
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        height: 1.5,
+                        fontSize: 15,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Divider(),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Icon(Icons.account_circle, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Issued by: $author',
+                          style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700, color: theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+                        ),
+                      ],
+                    ),
+                    if (formattedDate.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Icon(Icons.schedule, size: 18, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                          const SizedBox(width: 8),
+                          Text(
+                            formattedDate,
+                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            // Modal Actions Footer
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: catColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Close', style: TextStyle(fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
