@@ -46,11 +46,17 @@ class AuthCubit extends Cubit<AuthState> {
     return e.toString();
   }
 
+  void _safeConnectSocket() {
+    try {
+      _socketClient?.connect();
+    } catch (_) {}
+  }
+
   void restoreSession(Map<String, dynamic>? user) {
     if (user != null) {
       authNotifier.value = true;
       roleNotifier.value = user['role'] ?? 'reporter';
-      _socketClient?.connect();
+      _safeConnectSocket();
       emit(Authenticated(user));
     } else {
       authNotifier.value = false;
@@ -71,7 +77,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _storage.saveUser(result['user']);
       authNotifier.value = true;
       roleNotifier.value = result['user']['role'] ?? 'reporter';
-      _socketClient?.connect();
+      _safeConnectSocket();
       emit(Authenticated(result['user']));
     } catch (e) {
       emit(Unauthenticated(error: _extractError(e)));
@@ -84,14 +90,14 @@ class AuthCubit extends Cubit<AuthState> {
     if (cachedUser != null && token != null) {
       authNotifier.value = true;
       roleNotifier.value = cachedUser['role'] ?? 'reporter';
-      _socketClient?.connect();
+      _safeConnectSocket();
       emit(Authenticated(cachedUser));
     } else {
       // Fallback guest session when no previous token saved
       final guestUser = {'id': 'biometric-user', 'name': 'Biometric User', 'role': 'reporter'};
       authNotifier.value = true;
       roleNotifier.value = 'reporter';
-      _socketClient?.connect();
+      _safeConnectSocket();
       emit(Authenticated(guestUser));
     }
   }
@@ -121,7 +127,7 @@ class AuthCubit extends Cubit<AuthState> {
       await _storage.saveUser(result['user']);
       authNotifier.value = true;
       roleNotifier.value = result['user']['role'] ?? 'reporter';
-      _socketClient?.connect();
+      _safeConnectSocket();
       emit(Authenticated(result['user']));
     } catch (e) {
       emit(Unauthenticated(error: _extractError(e)));

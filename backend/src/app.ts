@@ -54,10 +54,6 @@ async function build() {
     if ((err as any).code === "FST_JWT_NO_AUTHORIZATION_HEADER" || (err as any).statusCode === 401) {
       return reply.code(401).send({ error: "UNAUTHORIZED", message: "Unauthorized" });
     }
-    const statusCode = (err as any).statusCode || (err as any).status || 500;
-    if (statusCode < 500) {
-      return reply.code(statusCode).send({ error: (err as any).code || "BAD_REQUEST", message: err.message });
-    }
     app.log.error(err);
     return reply.code(500).send({ error: "INTERNAL", message: "Internal server error" });
   });

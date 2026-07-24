@@ -13,37 +13,41 @@ class SocketClient {
   bool get isConnected => _socket?.connected == true;
 
   Future<void> connect() async {
-    final token = await _storage.getAccessToken();
-    if (token == null) return;
-    if (_socket?.connected == true) return;
+    try {
+      final token = await _storage.getAccessToken();
+      if (token == null) return;
+      if (_socket?.connected == true) return;
 
-    if (_socket != null) {
-      _socket!.disconnect();
-      _socket!.dispose();
-      _socket = null;
-    }
-
-    print('[socket] initializing connection to $_baseUrl');
-    _socket = io.io(_baseUrl, <String, dynamic>{
-      'auth': {'token': token},
-      'transports': ['websocket'],
-      'autoConnect': false,
-    });
-
-    _socket!.onConnect((_) {
-      print('[socket] connected successfully to $_baseUrl');
-    });
-    _socket!.onDisconnect((_) => print('[socket] disconnected'));
-    _socket!.onError((err) => print('[socket] error: $err'));
-
-    // Bind all accumulated event listeners to the new socket instance
-    _listeners.forEach((event, handlers) {
-      for (final handler in handlers) {
-        _socket!.on(event, handler);
+      if (_socket != null) {
+        _socket!.disconnect();
+        _socket!.dispose();
+        _socket = null;
       }
-    });
 
-    _socket!.connect();
+      print('[socket] initializing connection to $_baseUrl');
+      _socket = io.io(_baseUrl, <String, dynamic>{
+        'auth': {'token': token},
+        'transports': ['websocket'],
+        'autoConnect': false,
+      });
+
+      _socket!.onConnect((_) {
+        print('[socket] connected successfully to $_baseUrl');
+      });
+      _socket!.onDisconnect((_) => print('[socket] disconnected'));
+      _socket!.onError((err) => print('[socket] error: $err'));
+
+      // Bind all accumulated event listeners to the new socket instance
+      _listeners.forEach((event, handlers) {
+        for (final handler in handlers) {
+          _socket!.on(event, handler);
+        }
+      });
+
+      _socket!.connect();
+    } catch (e) {
+      print('[socket] connect error: $e');
+    }
   }
 
   void updateBaseUrl(String url) {
