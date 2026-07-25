@@ -525,20 +525,20 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.96),
-              borderRadius: BorderRadius.circular(26),
+              color: theme.colorScheme.surface.withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.18 : 0.08),
+                color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.16 : 0.08),
                 width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.1),
-                  blurRadius: 18,
-                  offset: const Offset(0, 4),
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+                  blurRadius: 14,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),
@@ -559,34 +559,34 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOutCubic,
                       padding: EdgeInsets.symmetric(
-                        horizontal: isSelected ? 16 : 12,
-                        vertical: 10,
+                        horizontal: isSelected ? 13 : 9,
+                        vertical: 6,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                            ? theme.colorScheme.primary.withValues(alpha: 0.14)
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(18),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             iconData,
-                            size: 24,
+                            size: 20,
                             color: isSelected
                                 ? theme.colorScheme.primary
                                 : theme.colorScheme.onSurface.withValues(alpha: 0.45),
                           ),
                           if (isSelected) ...[
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             Text(
                               dest.label,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w700,
                                 color: theme.colorScheme.primary,
-                                letterSpacing: 0.2,
+                                letterSpacing: 0.1,
                               ),
                             ),
                           ],
