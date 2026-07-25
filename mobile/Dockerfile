@@ -21,6 +21,7 @@ RUN echo 'server { \
     root /usr/share/nginx/html; \
     index index.html; \
     location / { \
+        add_header Cache-Control "no-cache, no-store, must-revalidate"; \
         try_files $uri $uri/ /index.html; \
     } \
 }' > /etc/nginx/conf.d/default.conf
