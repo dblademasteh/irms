@@ -58,7 +58,7 @@ class _IncidentsMapPageState extends State<IncidentsMapPage> {
 
     final initialCenter = _incidents.isNotEmpty
         ? LatLng((_incidents.first['latitude'] as num).toDouble(), (_incidents.first['longitude'] as num).toDouble())
-        : const LatLng(14.5995, 120.9842); // Default Manila coordinates
+        : const LatLng(17.6132, 121.7269); // Default Tuguegarao City coordinates
 
     return Scaffold(
       appBar: AppBar(

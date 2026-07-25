@@ -25,7 +25,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
   String _type = 'fire';
   List<Uint8List> _photoBytesList = [];
   Position? _gpsPosition;
-  LatLng _editablePosition = const LatLng(14.5995, 120.9842);
+  LatLng _editablePosition = const LatLng(17.6132, 121.7269);
   bool _isAnonymous = false;
 
   final stt.SpeechToText _speech = stt.SpeechToText();
