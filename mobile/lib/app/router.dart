@@ -525,11 +525,11 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            margin: const EdgeInsets.fromLTRB(14, 0, 14, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.16 : 0.08),
                 width: 1,
@@ -537,7 +537,7 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
-                  blurRadius: 14,
+                  blurRadius: 16,
                   offset: const Offset(0, 3),
                 ),
               ],
@@ -559,31 +559,31 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOutCubic,
                       padding: EdgeInsets.symmetric(
-                        horizontal: isSelected ? 13 : 9,
-                        vertical: 6,
+                        horizontal: isSelected ? 15 : 10,
+                        vertical: 8,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? theme.colorScheme.primary.withValues(alpha: 0.14)
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             iconData,
-                            size: 20,
+                            size: 22,
                             color: isSelected
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                                : theme.colorScheme.onSurface.withValues(alpha: 0.5),
                           ),
                           if (isSelected) ...[
                             const SizedBox(width: 6),
                             Text(
                               dest.label,
                               style: TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 12.5,
                                 fontWeight: FontWeight.w700,
                                 color: theme.colorScheme.primary,
                                 letterSpacing: 0.1,

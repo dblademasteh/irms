@@ -440,7 +440,7 @@ class IrmsAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(52);
+  Size get preferredSize => const Size.fromHeight(60);
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +448,7 @@ class IrmsAppBar extends StatelessWidget implements PreferredSizeWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 4, 8, 0),
+      padding: const EdgeInsets.fromLTRB(16, 4, 10, 0),
       decoration: BoxDecoration(
         color: backgroundColor ?? theme.colorScheme.surface,
         border: Border(
@@ -460,15 +460,15 @@ class IrmsAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         bottom: false,
         child: SizedBox(
-          height: 46,
+          height: 52,
           child: Row(
             children: [
               if (showBack)
                 IconButton(
                   onPressed: () => Navigator.maybePop(context),
-                  icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: theme.colorScheme.onSurface),
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, size: 21, color: theme.colorScheme.onSurface),
                   padding: const EdgeInsets.only(right: 4),
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
                 ),
               if (leading != null) leading!,
               const SizedBox(width: 4),
@@ -480,7 +480,7 @@ class IrmsAppBar extends StatelessWidget implements PreferredSizeWidget {
                     Text(
                       title,
                       style: TextStyle(
-                        fontSize: 17,
+                        fontSize: 19,
                         fontWeight: FontWeight.w800,
                         color: theme.colorScheme.onSurface,
                         letterSpacing: -0.3,
@@ -492,9 +492,9 @@ class IrmsAppBar extends StatelessWidget implements PreferredSizeWidget {
                       Text(
                         subtitle!,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
