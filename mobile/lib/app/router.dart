@@ -524,11 +524,11 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.92),
-              borderRadius: BorderRadius.circular(24),
+              color: theme.colorScheme.surface.withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(26),
               border: Border.all(
                 color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.18 : 0.08),
                 width: 1,
@@ -558,8 +558,8 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOutCubic,
                       padding: EdgeInsets.symmetric(
-                        horizontal: isSelected ? 14 : 10,
-                        vertical: 6,
+                        horizontal: isSelected ? 16 : 12,
+                        vertical: 10,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
@@ -572,17 +572,17 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                         children: [
                           Icon(
                             iconData,
-                            size: 20,
+                            size: 24,
                             color: isSelected
                                 ? theme.colorScheme.primary
                                 : theme.colorScheme.onSurface.withValues(alpha: 0.45),
                           ),
                           if (isSelected) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: 8),
                             Text(
                               dest.label,
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 color: theme.colorScheme.primary,
                                 letterSpacing: 0.2,

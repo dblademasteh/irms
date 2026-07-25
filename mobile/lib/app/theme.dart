@@ -19,7 +19,7 @@ class _TextScale {
   double get bodySmall      => 12;
   double get labelLarge     => 14;
   double get labelMedium    => 12;
-  double get labelSmall     => 11;
+  double get labelSmall     => 11;L
 }
 
 class IrmsColors {
