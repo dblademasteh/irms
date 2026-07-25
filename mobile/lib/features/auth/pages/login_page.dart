@@ -607,6 +607,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _loginBiometrics() async {
+    if (kIsWeb) return;
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool('biometrics_enabled') ?? true;
     if (!enabled) {
