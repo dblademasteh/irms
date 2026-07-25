@@ -525,10 +525,10 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(26),
+              borderRadius: BorderRadius.circular(28),
               border: Border.all(
                 color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.18 : 0.08),
                 width: 1,
@@ -536,8 +536,8 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.1),
-                  blurRadius: 18,
-                  offset: const Offset(0, 4),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
@@ -558,21 +558,21 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOutCubic,
                       padding: EdgeInsets.symmetric(
-                        horizontal: isSelected ? 16 : 12,
-                        vertical: 10,
+                        horizontal: isSelected ? 18 : 14,
+                        vertical: 14,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? theme.colorScheme.primary.withValues(alpha: 0.14)
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(22),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             iconData,
-                            size: 24,
+                            size: 26,
                             color: isSelected
                                 ? theme.colorScheme.primary
                                 : theme.colorScheme.onSurface.withValues(alpha: 0.45),
@@ -582,7 +582,7 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                             Text(
                               dest.label,
                               style: TextStyle(
-                                fontSize: 13,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: theme.colorScheme.primary,
                                 letterSpacing: 0.2,
