@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../app/theme.dart';
 import '../../../core/socket_client.dart';
 import '../../../core/dio_client.dart';
@@ -268,10 +270,58 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
                         child: _MetaRow(
                           icon: Icons.map,
                           label: 'Coordinates (Tap for Directions)',
-                          value: '${incident['latitude'].toStringAsFixed(5)}, ${incident['longitude'].toStringAsFixed(5)}',
+                          value: '${(incident['latitude'] as num).toDouble().toStringAsFixed(5)}, ${(incident['longitude'] as num).toDouble().toStringAsFixed(5)}',
                         ),
                       ),
                       Icon(Icons.open_in_new, size: 18, color: theme.colorScheme.primary),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  height: 160,
+                  child: FlutterMap(
+                    options: MapOptions(
+                      initialCenter: LatLng(
+                        (incident['latitude'] as num).toDouble(),
+                        (incident['longitude'] as num).toDouble(),
+                      ),
+                      initialZoom: 15,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.example.irms_mobile',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: LatLng(
+                              (incident['latitude'] as num).toDouble(),
+                              (incident['longitude'] as num).toDouble(),
+                            ),
+                            width: 38,
+                            height: 38,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(Icons.location_on, color: Colors.white, size: 22),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),

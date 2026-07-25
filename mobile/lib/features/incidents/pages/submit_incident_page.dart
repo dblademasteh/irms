@@ -25,7 +25,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
   String _type = 'fire';
   List<Uint8List> _photoBytesList = [];
   Position? _gpsPosition;
-  LatLng? _editablePosition;
+  LatLng _editablePosition = const LatLng(14.5995, 120.9842);
   bool _isAnonymous = false;
 
   final stt.SpeechToText _speech = stt.SpeechToText();
@@ -652,7 +652,6 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
           ),
           const SizedBox(height: 10),
         ],
-        if (_editablePosition != null) ...[
           const SizedBox(height: 8),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -660,7 +659,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
               height: 160,
               child: FlutterMap(
                 options: MapOptions(
-                  initialCenter: _editablePosition!,
+                  initialCenter: _editablePosition,
                   initialZoom: 15,
                   interactionOptions: const InteractionOptions(
                     flags: InteractiveFlag.all,
@@ -679,7 +678,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
                   MarkerLayer(
                     markers: [
                       Marker(
-                        point: _editablePosition!,
+                        point: _editablePosition,
                         width: 40,
                         height: 40,
                         child: Container(
@@ -720,7 +719,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    '${_editablePosition!.latitude.toStringAsFixed(5)}, ${_editablePosition!.longitude.toStringAsFixed(5)}',
+                    '${_editablePosition.latitude.toStringAsFixed(5)}, ${_editablePosition.longitude.toStringAsFixed(5)}',
                     style: TextStyle(
                       color: theme.colorScheme.primary,
                       fontSize: 12,
@@ -761,24 +760,6 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
               fontSize: 11,
             ),
           ),
-        ] else ...[
-          _buildCard(
-            child: Row(
-              children: [
-                Icon(Icons.gps_off, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Acquiring GPS location...',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ],
     );
   }
