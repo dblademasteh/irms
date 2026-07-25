@@ -73,7 +73,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
     _phoneCtrl.clear();
     setState(() {
       _photoBytesList.clear();
-      _editablePosition = null;
+      _editablePosition = const LatLng(17.6132, 121.7269);
       _gpsPosition = null;
     });
     context.read<IncidentCubit>().reset();
