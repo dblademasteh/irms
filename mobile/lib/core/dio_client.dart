@@ -19,6 +19,24 @@ class DioClient {
   void updateBaseUrl(String url) {
     dio.options.baseUrl = url;
   }
+
+  static String resolveMediaUrl(String baseUrl, String rawUrl) {
+    if (rawUrl.isEmpty) return '';
+    if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://') || rawUrl.startsWith('data:')) {
+      return rawUrl;
+    }
+    if (rawUrl.startsWith('s3://')) {
+      final parts = rawUrl.replaceFirst('s3://', '').split('/');
+      if (parts.length >= 2) {
+        parts.removeAt(0);
+        final key = parts.join('/');
+        return resolveMediaUrl(baseUrl, '/public/uploads/$key');
+      }
+    }
+    final cleanBase = baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    final cleanPath = rawUrl.startsWith('/') ? rawUrl : '/$rawUrl';
+    return '$cleanBase$cleanPath';
+  }
 }
 
 class _AuthInterceptor extends Interceptor {

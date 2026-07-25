@@ -303,10 +303,10 @@ class _DispatcherIncidentDetailPageState extends State<DispatcherIncidentDetailP
                               final item = (inc['media'] as List)[idx];
                               final rawUrl = item is Map ? (item['url'] ?? '').toString() : item.toString();
                               final baseUrl = context.read<DioClient>().dio.options.baseUrl;
-                              final fullUrl = rawUrl.startsWith('http') || rawUrl.startsWith('data:') ? rawUrl : '$baseUrl$rawUrl';
+                              final fullUrl = DioClient.resolveMediaUrl(baseUrl, rawUrl);
                               final allUrls = (inc['media'] as List).map((m) {
                                 final r = m is Map ? (m['url'] ?? '').toString() : m.toString();
-                                return r.startsWith('http') || r.startsWith('data:') ? r : '$baseUrl$r';
+                                return DioClient.resolveMediaUrl(baseUrl, r);
                               }).toList();
 
                               return GestureDetector(

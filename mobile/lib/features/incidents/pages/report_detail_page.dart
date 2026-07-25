@@ -345,7 +345,7 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (ctx, idx) {
                 final rawUrl = mediaUrls[idx];
-                final fullUrl = rawUrl.startsWith('http') ? rawUrl : '$baseUrl$rawUrl';
+                final fullUrl = DioClient.resolveMediaUrl(baseUrl, rawUrl);
                 return ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.network(
