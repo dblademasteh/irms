@@ -5,7 +5,6 @@ import '../../../core/socket_client.dart';
 import '../../../core/dio_client.dart';
 import '../../../core/map_launcher.dart';
 import '../cubit/incident_cubit.dart';
-import '../widgets/ai_incident_analysis_card.dart';
 import '../widgets/incident_chat_sheet.dart';
 
 class ReportDetailPage extends StatefulWidget {
