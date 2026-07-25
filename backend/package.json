@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/app.ts",
-    "start": "tsx src/app.ts",
-    "migrate": "tsx src/db/migrate.ts",
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "start:dev": "tsx src/app.ts",
+    "migrate": "node dist/db/migrate.js",
+    "migrate:dev": "tsx src/db/migrate.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

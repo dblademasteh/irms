@@ -8,6 +8,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
+RUN npm run build
 
 FROM node:20-alpine
 
@@ -17,15 +18,18 @@ RUN addgroup -S irms && adduser -S irms -G irms
 
 WORKDIR /app
 
-ENV PG_HOST=o12udbauba2yuuxjdyfhnl3x
+ENV NODE_ENV=production
+ENV PORT=4000
+ENV PG_HOST=postgres
 ENV PG_PORT=5432
-ENV PG_DATABASE=postgres
-ENV PG_USER=postgres
-ENV REDIS_HOST=upqpm50jdf1f6itk8atdaay9
+ENV PG_DATABASE=irms
+ENV PG_USER=irms
+ENV PG_PASSWORD=irms_dev_password
+ENV REDIS_HOST=redis
 ENV REDIS_PORT=6379
 
 COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/src ./src
+COPY --from=build /app/dist ./dist
 COPY --from=build /app/migrations ./migrations
 COPY --from=build /app/package.json ./
 

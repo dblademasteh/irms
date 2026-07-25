@@ -1,0 +1,81 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: irms_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: irms
+      POSTGRES_PASSWORD: irms_prod_password
+      POSTGRES_DB: irms
+    ports:
+      - "5432:5432"
+    volumes:
+      - irms_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U irms -d irms"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: irms_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - irms_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: irms_backend
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_DATABASE: irms
+      PG_USER: irms
+      PG_PASSWORD: irms_prod_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_change_me_in_coolify}
+      CORS_ORIGIN: "*"
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: irms_web
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  irms_pg_data:
+  irms_redis_data:
