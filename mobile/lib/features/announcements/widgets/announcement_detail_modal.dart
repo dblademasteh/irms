@@ -45,6 +45,7 @@ void showAnnouncementDetailModal(BuildContext context, Map<String, dynamic> anno
 
   showDialog(
     context: context,
+    useRootNavigator: true,
     builder: (ctx) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       backgroundColor: theme.colorScheme.surface,

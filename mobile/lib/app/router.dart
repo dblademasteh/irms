@@ -173,6 +173,7 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
 
     showDialog(
       context: context,
+      useRootNavigator: true,
       barrierDismissible: true,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -518,26 +519,26 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
     }
 
     return Scaffold(
-      extendBody: true,
+      extendBody: false,
       body: widget.child,
       bottomNavigationBar: Builder(
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
           return Container(
             margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface.withValues(alpha: 0.96),
-              borderRadius: BorderRadius.circular(30),
+              borderRadius: BorderRadius.circular(26),
               border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.2 : 0.1),
-                width: 1.5,
+                color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.18 : 0.08),
+                width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.12),
-                  blurRadius: 22,
-                  offset: const Offset(0, 8),
+                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.1),
+                  blurRadius: 18,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
@@ -558,32 +559,32 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOutCubic,
                       padding: EdgeInsets.symmetric(
-                        horizontal: isSelected ? 22 : 16,
-                        vertical: 18,
+                        horizontal: isSelected ? 16 : 12,
+                        vertical: 10,
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? theme.colorScheme.primary.withValues(alpha: 0.15)
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             iconData,
-                            size: 28,
+                            size: 24,
                             color: isSelected
                                 ? theme.colorScheme.primary
                                 : theme.colorScheme.onSurface.withValues(alpha: 0.45),
                           ),
                           if (isSelected) ...[
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
                             Text(
                               dest.label,
                               style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
                                 color: theme.colorScheme.primary,
                                 letterSpacing: 0.2,
                               ),

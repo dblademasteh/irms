@@ -173,6 +173,7 @@ class _AdminPageState extends State<AdminPage> {
     final ctrl = TextEditingController();
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (bottomSheetCtx) => _BroadcastSheetBody(ctrl: ctrl),
@@ -201,6 +202,7 @@ class _AdminPageState extends State<AdminPage> {
     String selectedRole = 'dispatcher';
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (bottomSheetCtx) => StatefulBuilder(
@@ -263,6 +265,7 @@ class _AdminPageState extends State<AdminPage> {
     bool isUrban = false;
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (bottomSheetCtx) => StatefulBuilder(
@@ -346,6 +349,7 @@ class _AdminPageState extends State<AdminPage> {
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (bottomSheetCtx) => StatefulBuilder(

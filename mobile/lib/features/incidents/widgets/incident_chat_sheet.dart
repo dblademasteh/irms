@@ -8,6 +8,7 @@ import '../models/chat_message_model.dart';
 void showIncidentChatSheet(BuildContext context, {required String incidentId, String? currentUserId, String? role}) {
   showModalBottomSheet(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
     builder: (ctx) => IncidentChatSheet(

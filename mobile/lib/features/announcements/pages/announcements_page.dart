@@ -131,6 +131,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
 
     showDialog(
       context: context,
+      useRootNavigator: true,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),

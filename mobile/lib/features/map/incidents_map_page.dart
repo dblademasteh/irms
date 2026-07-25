@@ -114,6 +114,7 @@ class _IncidentsMapPageState extends State<IncidentsMapPage> {
   void _showSummarySheet(Map<String, dynamic> inc) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) {
         return Padding(
