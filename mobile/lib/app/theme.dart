@@ -440,7 +440,7 @@ class IrmsAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(60);
+  Size get preferredSize => const Size.fromHeight(56);
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +448,7 @@ class IrmsAppBar extends StatelessWidget implements PreferredSizeWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 4, 10, 0),
+      padding: const EdgeInsets.fromLTRB(12, 0, 8, 0),
       decoration: BoxDecoration(
         color: backgroundColor ?? theme.colorScheme.surface,
         border: Border(
@@ -460,46 +460,49 @@ class IrmsAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: SafeArea(
         bottom: false,
         child: SizedBox(
-          height: 52,
+          height: 56,
           child: Row(
             children: [
               if (showBack)
                 IconButton(
                   onPressed: () => Navigator.maybePop(context),
-                  icon: Icon(Icons.arrow_back_ios_new_rounded, size: 21, color: theme.colorScheme.onSurface),
-                  padding: const EdgeInsets.only(right: 4),
-                  constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                  icon: Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: theme.colorScheme.onSurface),
+                  padding: const EdgeInsets.only(right: 0),
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
                 ),
               if (leading != null) leading!,
-              const SizedBox(width: 4),
+              if (!showBack && leading == null) const SizedBox(width: 4),
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 19,
-                        fontWeight: FontWeight.w800,
-                        color: theme.colorScheme.onSurface,
-                        letterSpacing: -0.3,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (subtitle != null)
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        subtitle!,
+                        title,
                         style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.onSurface,
+                          letterSpacing: -0.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                  ],
+                      if (subtitle != null)
+                        Text(
+                          subtitle!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
                 ),
               ),
               if (actions != null) ...actions!,

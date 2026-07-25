@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -367,14 +368,17 @@ class _ProfilePageState extends State<ProfilePage> {
           _buildLanguageRow(theme),
           const Divider(height: 28),
           _buildThemeRow(theme),
-          const Divider(height: 28),
-          _buildBiometricRow(theme),
+          if (!kIsWeb) ...[
+            const Divider(height: 28),
+            _buildBiometricRow(theme),
+          ],
         ],
       ),
     );
   }
 
   Widget _buildBiometricRow(ThemeData theme) {
+    if (kIsWeb) return const SizedBox.shrink();
     return FutureBuilder<SharedPreferences>(
       future: SharedPreferences.getInstance(),
       builder: (context, snapshot) {

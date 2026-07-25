@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -463,28 +464,30 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              const Expanded(child: Divider()),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'or',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+          if (!kIsWeb) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Expanded(child: Divider()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    'or',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
                   ),
                 ),
-              ),
-              const Expanded(child: Divider()),
-            ],
-          ),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            onPressed: _loginBiometrics,
-            icon: const Icon(Icons.fingerprint, size: 22),
-            label: const Text('Sign in with Biometrics'),
-          ),
+                const Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: _loginBiometrics,
+              icon: const Icon(Icons.fingerprint, size: 22),
+              label: const Text('Sign in with Biometrics'),
+            ),
+          ],
         ],
         const SizedBox(height: 28),
         Container(
