@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme.dart';
 import '../../../core/locale_cubit.dart';
 import '../../../l10n/app_localizations.dart';
@@ -200,7 +201,7 @@ _SectionItem(
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _buildSection(
+_buildSection(
                     theme,
                     title: 'About',
                     items: [
@@ -209,16 +210,6 @@ _SectionItem(
                         title: 'App Info',
                         subtitle: 'Version 1.0.0',
                         onTap: () => _showAboutSheet(context),
-                      ),
-                      _SectionItem(
-                        icon: Icons.help_outline,
-                        title: 'Help & Support',
-                        onTap: () {},
-                      ),
-                      _SectionItem(
-                        icon: Icons.privacy_tip_outlined,
-                        title: 'Privacy Policy',
-                        onTap: () {},
                       ),
                     ],
                   ),
@@ -775,6 +766,13 @@ class _AppInfoSheet extends StatelessWidget {
   final VoidCallback? onHelpSupportTap;
   const _AppInfoSheet({required this.theme, this.onHelpSupportTap});
 
+  static Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -799,8 +797,8 @@ class _AppInfoSheet extends StatelessWidget {
             _InfoRow(icon: Icons.flutter_dash, label: 'Framework', value: 'Flutter', theme: theme),
             const Divider(height: 32),
             _LinkRow(icon: Icons.help_outline, label: 'Help & Support', onTap: () => onHelpSupportTap?.call(), theme: theme),
-            _LinkRow(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () {}, theme: theme),
-            _LinkRow(icon: Icons.description_outlined, label: 'Terms of Service', onTap: () {}, theme: theme),
+            _LinkRow(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () => _AppInfoSheet._openUrl('https://irms.local/privacy'), theme: theme),
+            _LinkRow(icon: Icons.description_outlined, label: 'Terms of Service', onTap: () => _AppInfoSheet._openUrl('https://irms.local/terms'), theme: theme),
             const SizedBox(height: 16),
           ],
         ),
