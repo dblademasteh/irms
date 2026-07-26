@@ -8,7 +8,11 @@ export type AnnouncementTemplate =
   | "system_maintenance"
   | "safety_tip"
   | "incident_summary"
-  | "general_emergency";
+  | "general_emergency"
+  | "traffic_update"
+  | "earthquake_advisory"
+  | "flood_warning"
+  | "tsunami_warning";
 
 export interface GenerateInput {
   template: AnnouncementTemplate;
@@ -161,6 +165,42 @@ export async function generateAnnouncement(input: GenerateInput): Promise<string
       }
       return parts.join(" ");
     }
+
+    case "traffic_update": {
+      const parts = [
+        `TRAFFIC ADVISORY${location.toUpperCase()}:`,
+        details ?? "Exercise caution on roads. Traffic conditions may be heavier than usual.",
+        "Plan your travel accordingly.",
+      ];
+      return parts.join(" ");
+    }
+
+    case "earthquake_advisory": {
+      const parts = [
+        `EARTHQUAKE ADVISORY${location.toUpperCase()}:`,
+        details ?? "A tremor has been detected. If you feel shaking, drop, cover, and hold on.",
+        "Stay away from windows and heavy objects. Expect possible aftershocks.",
+      ];
+      return parts.join(" ");
+    }
+
+    case "flood_warning": {
+      const parts = [
+        `FLOOD WARNING${location.toUpperCase()}:`,
+        details ?? "Flooding has been reported or is imminent in your area.",
+        "Move to higher ground immediately. Do not attempt to walk or drive through floodwaters.",
+      ];
+      return parts.join(" ");
+    }
+
+    case "tsunami_warning": {
+      const parts = [
+        `TSUNAMI WARNING${location.toUpperCase()}:`,
+        details ?? "A tsunami warning has been issued for this area.",
+        "Evacuate immediately to higher ground. Do not return until authorities give the all-clear.",
+      ];
+      return parts.join(" ");
+    }
   }
 }
 
@@ -174,5 +214,9 @@ export function getAvailableTemplates(): { key: AnnouncementTemplate; label: str
     { key: "safety_tip", label: "Safety Tip", description: "Community safety reminders and tips" },
     { key: "incident_summary", label: "Incident Summary", description: "Auto-generated situation report with live data" },
     { key: "general_emergency", label: "General Emergency", description: "Catch-all emergency broadcast" },
+    { key: "traffic_update", label: "Traffic Update", description: "Road closures, traffic jams, and route advisories" },
+    { key: "earthquake_advisory", label: "Earthquake Advisory", description: "Earthquake reports and safety instructions" },
+    { key: "flood_warning", label: "Flood Warning", description: "Flooding alerts and evacuation notices" },
+    { key: "tsunami_warning", label: "Tsunami Warning", description: "Tsunami warnings and coastal evacuation" },
   ];
 }

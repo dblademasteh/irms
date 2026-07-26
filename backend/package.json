@@ -10,7 +10,9 @@
     "start:dev": "tsx src/app.ts",
     "migrate": "node dist/db/migrate.js",
     "migrate:dev": "tsx src/db/migrate.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "seed": "node dist/db/seed.js",
+    "seed:dev": "tsx src/db/seed.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",

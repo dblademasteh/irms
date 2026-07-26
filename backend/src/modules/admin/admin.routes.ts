@@ -161,7 +161,7 @@ export async function registerAdminRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const body = z.object({
         message: z.string().min(1).max(500),
-        category: z.enum(["emergency", "system", "safety"]).optional(),
+        category: z.enum(["emergency", "system", "safety", "traffic", "earthquake", "flood", "tsunami", "weather"]).optional(),
         target_role: z.enum(["all", "dispatchers", "reporters"]).optional(),
       }).parse(req.body);
 

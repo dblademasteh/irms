@@ -196,12 +196,12 @@ class _LoginPageState extends State<LoginPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(Icons.shield_outlined, color: theme.colorScheme.primary, size: 20),
+            child: Image.asset('solana_logo.png', fit: BoxFit.contain),
           ),
           const SizedBox(width: 10),
           Text(
@@ -223,12 +223,14 @@ class _LoginPageState extends State<LoginPage> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(16),
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.shield_outlined, color: Colors.white, size: 40),
+                padding: const EdgeInsets.all(8),
+                child: Image.asset('solana_logo.png', fit: BoxFit.contain),
               ),
               const SizedBox(width: 20),
               Column(

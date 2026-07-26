@@ -518,83 +518,58 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
       );
     }
 
-    return Scaffold(
+return Scaffold(
       extendBody: false,
       body: widget.child,
       bottomNavigationBar: Builder(
         builder: (context) {
           final isDark = Theme.of(context).brightness == Brightness.dark;
-          return Container(
-            margin: const EdgeInsets.fromLTRB(14, 0, 14, 8),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.94),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.16 : 0.08),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
-                  blurRadius: 16,
-                  offset: const Offset(0, 3),
+          return SizedBox(
+            height: 56,
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface.withValues(alpha: 0.95),
+                border: Border(
+                  top: BorderSide(
+                    color: theme.colorScheme.outline.withValues(alpha: isDark ? 0.2 : 0.1),
+                    width: 1,
+                  ),
                 ),
-              ],
-            ),
-            child: SafeArea(
-              top: false,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(dests.length, (i) {
-                  final dest = dests[i];
-                  final isSelected = _currentIndex(context) == i;
-                  final iconWidget = isSelected ? dest.selectedIcon : dest.icon;
-                  final iconData = (iconWidget as Icon).icon;
-
-                  return GestureDetector(
-                    onTap: () => _onTap(context, i),
-                    behavior: HitTestBehavior.opaque,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutCubic,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isSelected ? 15 : 10,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? theme.colorScheme.primary.withValues(alpha: 0.14)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            iconData,
-                            size: 22,
-                            color: isSelected
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                          ),
-                          if (isSelected) ...[
-                            const SizedBox(width: 6),
-                            Text(
-                              dest.label,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w700,
-                                color: theme.colorScheme.primary,
-                                letterSpacing: 0.1,
-                              ),
-                            ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(dests.length, (i) {
+                    final dest = dests[i];
+                    final isSelected = _currentIndex(context) == i;
+                    final iconWidget = isSelected ? dest.selectedIcon : dest.icon;
+                    final iconData = (iconWidget as Icon).icon;
+                    return GestureDetector(
+                      onTap: () => _onTap(context, i),
+                      behavior: HitTestBehavior.opaque,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOutCubic,
+                        padding: EdgeInsets.symmetric(horizontal: isSelected ? 14 : 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isSelected ? theme.colorScheme.primary.withValues(alpha: 0.14) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(iconData, size: 22, color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                            if (isSelected) ...[
+                              const SizedBox(width: 6),
+                              Text(dest.label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: theme.colorScheme.primary, letterSpacing: 0.1)),
+                            ],
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
             ),
           );

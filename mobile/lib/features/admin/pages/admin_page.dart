@@ -36,136 +36,198 @@ class _AdminPageState extends State<AdminPage> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  _SegmentButton(title: 'Analytics', icon: Icons.bar_chart, isSelected: _selectedIndex == 0, onTap: () => setState(() => _selectedIndex = 0)),
-                  _SegmentButton(title: 'Users', icon: Icons.people_outline, isSelected: _selectedIndex == 1, onTap: () => setState(() => _selectedIndex = 1)),
-                  _SegmentButton(title: 'Contacts', icon: Icons.contact_phone, isSelected: _selectedIndex == 2, onTap: () => setState(() => _selectedIndex = 2)),
-                  _SegmentButton(title: 'Codes', icon: Icons.vpn_key, isSelected: _selectedIndex == 3, onTap: () => setState(() => _selectedIndex = 3)),
-                  _SegmentButton(title: 'Barangays', icon: Icons.location_city, isSelected: _selectedIndex == 4, onTap: () => setState(() => _selectedIndex = 4)),
-                  _SegmentButton(title: 'Incidents', icon: Icons.warning_amber, isSelected: _selectedIndex == 5, onTap: () => setState(() => _selectedIndex = 5)),
-                  _SegmentButton(title: 'Units', icon: Icons.local_shipping, isSelected: _selectedIndex == 6, onTap: () => setState(() => _selectedIndex = 6)),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: BlocBuilder<AdminCubit, AdminState>(
-              builder: (ctx, state) {
-                if (state is AdminLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-
-                List<dynamic> users = [];
-                Map<String, dynamic> analytics = {};
-                List<dynamic> contacts = [];
-                List<dynamic> categories = [];
-                List<dynamic> inviteCodes = [];
-                List<dynamic> barangays = [];
-                List<dynamic> incidents = [];
-                List<dynamic> units = [];
-                String? error;
-
-          if (state is AdminLoaded) {
-            users = state.users;
-            analytics = state.analytics;
-            contacts = state.contacts;
-            categories = state.categories;
-            inviteCodes = state.inviteCodes;
-            barangays = state.barangays;
-            incidents = state.incidents;
-            units = state.units;
-          } else if (state is AdminError) {
-            error = state.message;
-            users = state.previousUsers ?? [];
-            analytics = state.previousAnalytics ?? {};
-            contacts = state.previousContacts ?? [];
-            categories = state.previousCategories ?? [];
-            inviteCodes = state.previousInviteCodes ?? [];
-            barangays = state.previousBarangays ?? [];
-            incidents = state.previousIncidents ?? [];
-            units = state.previousUnits ?? [];
-          }
-
-          if (error != null && users.isEmpty && analytics.isEmpty && contacts.isEmpty) {
-            return _buildError(theme, error);
-          }
-
-          if (_selectedIndex == 0) {
-            if (analytics.isEmpty) return const Center(child: Text('No analytics data.'));
-            return _AnalyticsView(analytics: analytics, onExport: () => _showExportSheet(context));
-          } else if (_selectedIndex == 1) {
-            if (users.isEmpty) return const Center(child: Text('No users found.'));
-            return _UsersView(users: users, incidents: incidents);
-          } else if (_selectedIndex == 2) {
-            return AdminContactsView(contacts: contacts, categories: categories);
-          } else if (_selectedIndex == 3) {
-            return _InviteCodesView(codes: inviteCodes);
-          } else if (_selectedIndex == 5) {
-            return _IncidentsAdminView(incidents: incidents);
-          } else if (_selectedIndex == 6) {
-            return _UnitsView(units: units);
-          } else {
-            return _BarangaysView(barangays: barangays);
-          }
+      body: LayoutBuilder(
+        builder: (ctx, constraints) {
+          final isWide = constraints.maxWidth > 600;
+          return isWide ? _buildWideLayout(theme) : _buildNarrowLayout(theme);
         },
       ),
-      ),
-        ],
-      ),
-      floatingActionButton: _selectedIndex == 2
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                final s = context.read<AdminCubit>().state;
-                final cats = s is AdminLoaded ? s.categories : <dynamic>[];
-                showAddContactSheet(context, categories: cats);
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Add Contact'),
-            )
-          : _selectedIndex == 3
-          ? FloatingActionButton.extended(
-              onPressed: () => _showCreateCodeSheet(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Create Code'),
-              backgroundColor: Colors.orange,
-              foregroundColor: Colors.white,
-            )
-          : _selectedIndex == 4
-          ? FloatingActionButton.extended(
-              onPressed: () => _showAddBarangaySheet(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Add Barangay'),
-              backgroundColor: Colors.teal,
-              foregroundColor: Colors.white,
-            )
-          : _selectedIndex == 6
-          ? FloatingActionButton.extended(
-              onPressed: () => _showAddUnitSheet(context),
-              icon: const Icon(Icons.add),
-              label: const Text('Add Unit'),
-              backgroundColor: Colors.indigo,
-              foregroundColor: Colors.white,
-            )
-          : _selectedIndex == 0
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => _showBroadcastSheet(context),
-              icon: const Icon(Icons.campaign),
-              label: const Text('Broadcast'),
-              backgroundColor: theme.colorScheme.error,
-              foregroundColor: theme.colorScheme.onError,
+      floatingActionButton: _buildFab(context),
+    );
+  }
+
+  Widget? _buildFab(BuildContext context) {
+    final state = context.read<AdminCubit>().state;
+    final categories = state is AdminLoaded ? state.categories : <dynamic>[];
+
+    switch (_selectedIndex) {
+      case 2:
+        return FloatingActionButton.extended(
+          onPressed: () => showAddContactSheet(context, categories: categories),
+          icon: const Icon(Icons.add),
+          label: const Text('Add Contact'),
+        );
+      case 3:
+        return FloatingActionButton.extended(
+          onPressed: () => _showCreateCodeSheet(context),
+          icon: const Icon(Icons.add),
+          label: const Text('Create Code'),
+          backgroundColor: Colors.orange,
+          foregroundColor: Colors.white,
+        );
+      case 4:
+        return FloatingActionButton.extended(
+          onPressed: () => _showAddBarangaySheet(context),
+          icon: const Icon(Icons.add),
+          label: const Text('Add Barangay'),
+          backgroundColor: Colors.teal,
+          foregroundColor: Colors.white,
+        );
+      case 6:
+        return FloatingActionButton.extended(
+          onPressed: () => _showAddUnitSheet(context),
+          icon: const Icon(Icons.add),
+          label: const Text('Add Unit'),
+          backgroundColor: Colors.indigo,
+          foregroundColor: Colors.white,
+        );
+      default:
+        return null;
+    }
+  }
+
+  Widget _buildWideLayout(ThemeData theme) {
+    return Row(
+      children: [
+        NavigationRail(
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (i) => setState(() => _selectedIndex = i),
+          labelType: NavigationRailLabelType.all,
+          backgroundColor: theme.colorScheme.surface,
+          leading: const SizedBox(height: 8),
+          destinations: const [
+            NavigationRailDestination(icon: Icon(Icons.bar_chart_outlined), selectedIcon: Icon(Icons.bar_chart), label: Text('Analytics')),
+            NavigationRailDestination(icon: Icon(Icons.people_outline), selectedIcon: Icon(Icons.people), label: Text('Users')),
+            NavigationRailDestination(icon: Icon(Icons.contact_phone_outlined), selectedIcon: Icon(Icons.contact_phone), label: Text('Contacts')),
+            NavigationRailDestination(icon: Icon(Icons.vpn_key_outlined), selectedIcon: Icon(Icons.vpn_key), label: Text('Codes')),
+            NavigationRailDestination(icon: Icon(Icons.location_city_outlined), selectedIcon: Icon(Icons.location_city), label: Text('Barangays')),
+            NavigationRailDestination(icon: Icon(Icons.warning_amber_outlined), selectedIcon: Icon(Icons.warning_amber), label: Text('Incidents')),
+            NavigationRailDestination(icon: Icon(Icons.local_shipping_outlined), selectedIcon: Icon(Icons.local_shipping), label: Text('Units')),
+          ],
+        ),
+        const VerticalDivider(width: 1),
+        Expanded(child: _buildContent(theme)),
+      ],
+    );
+  }
+
+  Widget _buildNarrowLayout(ThemeData theme) {
+    return Column(
+      children: [
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              _CompactTab(label: 'Analytics', icon: Icons.bar_chart, isSelected: _selectedIndex == 0, onTap: () => setState(() => _selectedIndex = 0)),
+              _CompactTab(label: 'Users', icon: Icons.people_outline, isSelected: _selectedIndex == 1, onTap: () => setState(() => _selectedIndex = 1)),
+              _CompactTab(label: 'Contacts', icon: Icons.contact_phone, isSelected: _selectedIndex == 2, onTap: () => setState(() => _selectedIndex = 2)),
+              _CompactTab(label: 'Codes', icon: Icons.vpn_key, isSelected: _selectedIndex == 3, onTap: () => setState(() => _selectedIndex = 3)),
+              _CompactTab(label: 'Barangays', icon: Icons.location_city, isSelected: _selectedIndex == 4, onTap: () => setState(() => _selectedIndex = 4)),
+              _CompactTab(label: 'Incidents', icon: Icons.warning_amber, isSelected: _selectedIndex == 5, onTap: () => setState(() => _selectedIndex = 5)),
+              _CompactTab(label: 'Units', icon: Icons.local_shipping, isSelected: _selectedIndex == 6, onTap: () => setState(() => _selectedIndex = 6)),
+            ],
+          ),
+        ),
+        Expanded(child: _buildContent(theme)),
+      ],
+    );
+  }
+
+  Widget _CompactTab({required String label, required IconData icon, required bool isSelected, required VoidCallback onTap}) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: Material(
+        color: isSelected ? theme.colorScheme.primaryContainer : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 18, color: isSelected ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurfaceVariant),
+                const SizedBox(width: 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    color: isSelected ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContent(ThemeData theme) {
+    return BlocBuilder<AdminCubit, AdminState>(
+      builder: (ctx, state) {
+        if (state is AdminLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        List<dynamic> users = [];
+        Map<String, dynamic> analytics = {};
+        List<dynamic> contacts = [];
+        List<dynamic> categories = [];
+        List<dynamic> inviteCodes = [];
+        List<dynamic> barangays = [];
+        List<dynamic> incidents = [];
+        List<dynamic> units = [];
+        String? error;
+
+        if (state is AdminLoaded) {
+          users = state.users;
+          analytics = state.analytics;
+          contacts = state.contacts;
+          categories = state.categories;
+          inviteCodes = state.inviteCodes;
+          barangays = state.barangays;
+          incidents = state.incidents;
+          units = state.units;
+        } else if (state is AdminError) {
+          error = state.message;
+          users = state.previousUsers ?? [];
+          analytics = state.previousAnalytics ?? {};
+          contacts = state.previousContacts ?? [];
+          categories = state.previousCategories ?? [];
+          inviteCodes = state.previousInviteCodes ?? [];
+          barangays = state.previousBarangays ?? [];
+          incidents = state.previousIncidents ?? [];
+          units = state.previousUnits ?? [];
+        }
+
+        if (error != null && users.isEmpty && analytics.isEmpty && contacts.isEmpty) {
+          return _buildError(theme, error);
+        }
+
+        switch (_selectedIndex) {
+          case 0:
+            if (analytics.isEmpty) return const Center(child: Text('No analytics data.'));
+            return _AnalyticsView(analytics: analytics, onExport: () => _showExportSheet(context));
+          case 1:
+            if (users.isEmpty) return const Center(child: Text('No users found.'));
+            return _UsersView(users: users, incidents: incidents);
+          case 2:
+            return AdminContactsView(contacts: contacts, categories: categories);
+          case 3:
+            return _InviteCodesView(codes: inviteCodes);
+          case 5:
+            return _IncidentsAdminView(incidents: incidents);
+          case 6:
+            return _UnitsView(units: units);
+          default:
+            return _BarangaysView(barangays: barangays);
+        }
+      },
     );
   }
 
@@ -2400,6 +2462,10 @@ class _BroadcastSheetBodyState extends State<_BroadcastSheetBody> {
     {'key': 'fire_alert', 'label': 'Fire Alert'},
     {'key': 'crime_safety', 'label': 'Crime / Safety'},
     {'key': 'medical_alert', 'label': 'Medical Alert'},
+    {'key': 'traffic_update', 'label': 'Traffic Update'},
+    {'key': 'earthquake_advisory', 'label': 'Earthquake Advisory'},
+    {'key': 'flood_warning', 'label': 'Flood Warning'},
+    {'key': 'tsunami_warning', 'label': 'Tsunami Warning'},
     {'key': 'incident_summary', 'label': 'Incident Summary'},
     {'key': 'safety_tip', 'label': 'Safety Tip'},
     {'key': 'system_maintenance', 'label': 'System Maintenance'},

@@ -104,6 +104,10 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
       {'key': 'fire_alert', 'label': 'Fire Alert'},
       {'key': 'crime_safety', 'label': 'Crime / Safety'},
       {'key': 'medical_alert', 'label': 'Medical Alert'},
+      {'key': 'traffic_update', 'label': 'Traffic Update'},
+      {'key': 'earthquake_advisory', 'label': 'Earthquake Advisory'},
+      {'key': 'flood_warning', 'label': 'Flood Warning'},
+      {'key': 'tsunami_warning', 'label': 'Tsunami Warning'},
       {'key': 'incident_summary', 'label': 'Incident Summary'},
       {'key': 'safety_tip', 'label': 'Safety Tip'},
       {'key': 'system_maintenance', 'label': 'System Maintenance'},
@@ -176,6 +180,11 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                     DropdownMenuItem(value: 'emergency', child: Text('Emergency')),
                     DropdownMenuItem(value: 'system', child: Text('System')),
                     DropdownMenuItem(value: 'safety', child: Text('Safety')),
+                    DropdownMenuItem(value: 'traffic', child: Text('Traffic')),
+                    DropdownMenuItem(value: 'earthquake', child: Text('Earthquake')),
+                    DropdownMenuItem(value: 'flood', child: Text('Flood')),
+                    DropdownMenuItem(value: 'tsunami', child: Text('Tsunami')),
+                    DropdownMenuItem(value: 'weather', child: Text('Weather')),
                   ],
                   onChanged: (v) => setDialogState(() => category = v ?? 'emergency'),
                 ),
@@ -341,6 +350,11 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
     final emergencyCount = _announcements.where((a) => a['category'] == 'emergency').length;
     final systemCount = _announcements.where((a) => a['category'] == 'system').length;
     final safetyCount = _announcements.where((a) => a['category'] == 'safety').length;
+    final trafficCount = _announcements.where((a) => a['category'] == 'traffic').length;
+    final weatherCount = _announcements.where((a) => a['category'] == 'weather').length;
+    final earthquakeCount = _announcements.where((a) => a['category'] == 'earthquake').length;
+    final floodCount = _announcements.where((a) => a['category'] == 'flood').length;
+    final tsunamiCount = _announcements.where((a) => a['category'] == 'tsunami').length;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,6 +418,51 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                 count: safetyCount,
                 color: IrmsColors.success,
               ),
+              const SizedBox(height: 6),
+              _buildSidebarFilterButton(
+                theme,
+                label: 'Traffic',
+                icon: Icons.traffic_outlined,
+                categoryKey: 'traffic',
+                count: trafficCount,
+                color: Colors.orange,
+              ),
+              const SizedBox(height: 6),
+              _buildSidebarFilterButton(
+                theme,
+                label: 'Weather',
+                icon: Icons.cloud_outlined,
+                categoryKey: 'weather',
+                count: weatherCount,
+                color: Colors.blue,
+              ),
+              const SizedBox(height: 6),
+              _buildSidebarFilterButton(
+                theme,
+                label: 'Earthquake',
+                icon: Icons.vibration,
+                categoryKey: 'earthquake',
+                count: earthquakeCount,
+                color: Colors.brown,
+              ),
+              const SizedBox(height: 6),
+              _buildSidebarFilterButton(
+                theme,
+                label: 'Flood',
+                icon: Icons.water_outlined,
+                categoryKey: 'flood',
+                count: floodCount,
+                color: Colors.cyan,
+              ),
+              const SizedBox(height: 6),
+              _buildSidebarFilterButton(
+                theme,
+                label: 'Tsunami',
+                icon: Icons.waves,
+                categoryKey: 'tsunami',
+                count: tsunamiCount,
+                color: Colors.indigo,
+              ),
               const Spacer(),
               if (isDispatcher(roleNotifier.value)) ...[
                 const Divider(height: 1),
@@ -447,6 +506,11 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                               _buildStatCard(theme, label: 'Emergency', count: emergencyCount, icon: Icons.warning_amber_rounded, color: IrmsColors.error),
                               _buildStatCard(theme, label: 'System', count: systemCount, icon: Icons.settings_outlined, color: theme.colorScheme.secondary),
                               _buildStatCard(theme, label: 'Safety', count: safetyCount, icon: Icons.health_and_safety_outlined, color: IrmsColors.success),
+                              _buildStatCard(theme, label: 'Traffic', count: trafficCount, icon: Icons.traffic_outlined, color: Colors.orange),
+                              _buildStatCard(theme, label: 'Weather', count: weatherCount, icon: Icons.cloud_outlined, color: Colors.blue),
+                              _buildStatCard(theme, label: 'Earthquake', count: earthquakeCount, icon: Icons.vibration, color: Colors.brown),
+                              _buildStatCard(theme, label: 'Flood', count: floodCount, icon: Icons.water_outlined, color: Colors.cyan),
+                              _buildStatCard(theme, label: 'Tsunami', count: tsunamiCount, icon: Icons.waves, color: Colors.indigo),
                             ],
                           ),
                         ),
@@ -585,18 +649,19 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
       children: [
         Container(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(16),
-            ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             child: Row(
               children: [
                 _SegmentTab(theme: theme, label: 'All', icon: Icons.campaign_outlined, isSelected: _selectedCategory == 'all', onTap: () => setState(() => _selectedCategory = 'all')),
                 _SegmentTab(theme: theme, label: 'Emergency', icon: Icons.warning_amber_rounded, isSelected: _selectedCategory == 'emergency', onTap: () => setState(() => _selectedCategory = 'emergency')),
                 _SegmentTab(theme: theme, label: 'System', icon: Icons.settings_outlined, isSelected: _selectedCategory == 'system', onTap: () => setState(() => _selectedCategory = 'system')),
                 _SegmentTab(theme: theme, label: 'Safety', icon: Icons.health_and_safety_outlined, isSelected: _selectedCategory == 'safety', onTap: () => setState(() => _selectedCategory = 'safety')),
+                _SegmentTab(theme: theme, label: 'Traffic', icon: Icons.traffic_outlined, isSelected: _selectedCategory == 'traffic', onTap: () => setState(() => _selectedCategory = 'traffic')),
+                _SegmentTab(theme: theme, label: 'Weather', icon: Icons.cloud_outlined, isSelected: _selectedCategory == 'weather', onTap: () => setState(() => _selectedCategory = 'weather')),
+                _SegmentTab(theme: theme, label: 'Earthquake', icon: Icons.vibration, isSelected: _selectedCategory == 'earthquake', onTap: () => setState(() => _selectedCategory = 'earthquake')),
+                _SegmentTab(theme: theme, label: 'Flood', icon: Icons.water_outlined, isSelected: _selectedCategory == 'flood', onTap: () => setState(() => _selectedCategory = 'flood')),
+                _SegmentTab(theme: theme, label: 'Tsunami', icon: Icons.waves, isSelected: _selectedCategory == 'tsunami', onTap: () => setState(() => _selectedCategory = 'tsunami')),
               ],
             ),
           ),
@@ -821,27 +886,27 @@ class _SegmentTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? theme.colorScheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 15,
-                color: isSelected ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.45),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                label,
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? theme.colorScheme.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.45),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              label,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
@@ -851,7 +916,6 @@ class _SegmentTab extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }
