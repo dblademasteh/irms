@@ -20,6 +20,11 @@ export interface GenerateInput {
   barangay?: string;
 }
 
+export interface GenerateOutput {
+  message: string;
+  category: string;
+}
+
 interface IncidentStats {
   totalActive: number;
   critical: number;
@@ -70,69 +75,85 @@ function formatTypeList(byType: Record<string, number>): string {
   return entries.length > 0 ? entries.join(", ") : "none reported";
 }
 
-export async function generateAnnouncement(input: GenerateInput): Promise<string> {
+const templateCategoryMap: Record<AnnouncementTemplate, string> = {
+  weather_advisory: "weather",
+  fire_alert: "emergency",
+  crime_safety: "emergency",
+  medical_alert: "emergency",
+  system_maintenance: "system",
+  safety_tip: "safety",
+  incident_summary: "emergency",
+  general_emergency: "emergency",
+  traffic_update: "traffic",
+  earthquake_advisory: "earthquake",
+  flood_warning: "flood",
+  tsunami_warning: "tsunami",
+};
+
+export async function generateAnnouncement(input: GenerateInput): Promise<GenerateOutput> {
   const stats = await getIncidentStats();
   const barangay = input.barangay?.trim() || null;
   const location = barangay ? ` in ${barangay}` : "";
   const details = input.details?.trim();
 
+  let message = "";
+
   switch (input.template) {
     case "weather_advisory": {
-      const parts = [
+      message = [
         `WEATHER ADVISORY${location.toUpperCase()}:`,
         details ?? "Residents are advised to stay alert for possible flooding and landslides.",
         "Avoid low-lying areas and stay tuned for updates.",
-      ];
-      if (stats.critical > 0) {
-        parts.push(`Note: ${stats.critical} critical incident(s) currently active.`);
-      }
-      return parts.join(" ");
+      ].join(" ");
+      break;
     }
 
     case "fire_alert": {
       const fireCount = stats.byType["fire"] ?? 0;
-      const parts = [
+      message = [
         `FIRE ALERT${location.toUpperCase()}:`,
         details ?? `Active fire incidents: ${fireCount}. Ensure fire exits are clear and follow evacuation procedures.`,
         "Contact BFP for emergencies.",
-      ];
-      return parts.join(" ");
+      ].join(" ");
+      break;
     }
 
     case "crime_safety": {
       const crimeCount = stats.byType["crime"] ?? 0;
-      const parts = [
+      message = [
         `PUBLIC SAFETY ADVISORY${location.toUpperCase()}:`,
         details ?? `Active crime reports: ${crimeCount}. Stay vigilant and report suspicious activity immediately.`,
         "Dial 911 for emergencies.",
-      ];
-      return parts.join(" ");
+      ].join(" ");
+      break;
     }
 
     case "medical_alert": {
       const medCount = stats.byType["medical"] ?? 0;
-      const parts = [
+      message = [
         `MEDICAL ALERT${location.toUpperCase()}:`,
         details ?? `Active medical emergencies: ${medCount}. First responders are on standby.`,
         "Call emergency hotlines for immediate assistance.",
-      ];
-      return parts.join(" ");
+      ].join(" ");
+      break;
     }
 
     case "system_maintenance": {
-      return [
+      message = [
         "SYSTEM MAINTENANCE NOTICE:",
         details ?? "The IRMS platform will undergo scheduled maintenance. Some features may be temporarily unavailable.",
         "We apologize for the inconvenience.",
       ].join(" ");
+      break;
     }
 
     case "safety_tip": {
-      return [
+      message = [
         "SAFETY REMINDER:",
         details ?? "Check your home for potential hazards. Keep emergency supplies ready and ensure family members know evacuation routes.",
         "Stay safe, everyone.",
       ].join(" ");
+      break;
     }
 
     case "incident_summary": {
@@ -151,7 +172,8 @@ export async function generateAnnouncement(input: GenerateInput): Promise<string
       if (details) {
         parts.push(details);
       }
-      return parts.join(" ");
+      message = parts.join(" ");
+      break;
     }
 
     case "general_emergency": {
@@ -163,60 +185,63 @@ export async function generateAnnouncement(input: GenerateInput): Promise<string
       if (stats.totalActive > 0) {
         parts.push(`Current active incidents: ${stats.totalActive}.`);
       }
-      return parts.join(" ");
+      message = parts.join(" ");
+      break;
     }
 
     case "traffic_update": {
-      const parts = [
+      message = [
         `TRAFFIC ADVISORY${location.toUpperCase()}:`,
         details ?? "Exercise caution on roads. Traffic conditions may be heavier than usual.",
         "Plan your travel accordingly.",
-      ];
-      return parts.join(" ");
+      ].join(" ");
+      break;
     }
 
     case "earthquake_advisory": {
-      const parts = [
+      message = [
         `EARTHQUAKE ADVISORY${location.toUpperCase()}:`,
         details ?? "A tremor has been detected. If you feel shaking, drop, cover, and hold on.",
         "Stay away from windows and heavy objects. Expect possible aftershocks.",
-      ];
-      return parts.join(" ");
+      ].join(" ");
+      break;
     }
 
     case "flood_warning": {
-      const parts = [
+      message = [
         `FLOOD WARNING${location.toUpperCase()}:`,
         details ?? "Flooding has been reported or is imminent in your area.",
         "Move to higher ground immediately. Do not attempt to walk or drive through floodwaters.",
-      ];
-      return parts.join(" ");
+      ].join(" ");
+      break;
     }
 
     case "tsunami_warning": {
-      const parts = [
+      message = [
         `TSUNAMI WARNING${location.toUpperCase()}:`,
         details ?? "A tsunami warning has been issued for this area.",
         "Evacuate immediately to higher ground. Do not return until authorities give the all-clear.",
-      ];
-      return parts.join(" ");
+      ].join(" ");
+      break;
     }
   }
+
+  return { message, category: templateCategoryMap[input.template] };
 }
 
-export function getAvailableTemplates(): { key: AnnouncementTemplate; label: string; description: string }[] {
+export function getAvailableTemplates(): { key: AnnouncementTemplate; label: string; description: string; category: string }[] {
   return [
-    { key: "weather_advisory", label: "Weather Advisory", description: "Flood, storm, or weather-related warnings" },
-    { key: "fire_alert", label: "Fire Alert", description: "Fire incident notifications and evacuation notices" },
-    { key: "crime_safety", label: "Crime / Safety", description: "Public safety and crime advisories" },
-    { key: "medical_alert", label: "Medical Alert", description: "Medical emergency notifications" },
-    { key: "system_maintenance", label: "System Maintenance", description: "Scheduled maintenance notices" },
-    { key: "safety_tip", label: "Safety Tip", description: "Community safety reminders and tips" },
-    { key: "incident_summary", label: "Incident Summary", description: "Auto-generated situation report with live data" },
-    { key: "general_emergency", label: "General Emergency", description: "Catch-all emergency broadcast" },
-    { key: "traffic_update", label: "Traffic Update", description: "Road closures, traffic jams, and route advisories" },
-    { key: "earthquake_advisory", label: "Earthquake Advisory", description: "Earthquake reports and safety instructions" },
-    { key: "flood_warning", label: "Flood Warning", description: "Flooding alerts and evacuation notices" },
-    { key: "tsunami_warning", label: "Tsunami Warning", description: "Tsunami warnings and coastal evacuation" },
+    { key: "weather_advisory", label: "Weather Advisory", description: "Flood, storm, or weather-related warnings", category: "weather" },
+    { key: "fire_alert", label: "Fire Alert", description: "Fire incident notifications and evacuation notices", category: "emergency" },
+    { key: "crime_safety", label: "Crime / Safety", description: "Public safety and crime advisories", category: "emergency" },
+    { key: "medical_alert", label: "Medical Alert", description: "Medical emergency notifications", category: "emergency" },
+    { key: "system_maintenance", label: "System Maintenance", description: "Scheduled maintenance notices", category: "system" },
+    { key: "safety_tip", label: "Safety Tip", description: "Community safety reminders and tips", category: "safety" },
+    { key: "incident_summary", label: "Incident Summary", description: "Auto-generated situation report with live data", category: "emergency" },
+    { key: "general_emergency", label: "General Emergency", description: "Catch-all emergency broadcast", category: "emergency" },
+    { key: "traffic_update", label: "Traffic Update", description: "Road closures, traffic jams, and route advisories", category: "traffic" },
+    { key: "earthquake_advisory", label: "Earthquake Advisory", description: "Earthquake reports and safety instructions", category: "earthquake" },
+    { key: "flood_warning", label: "Flood Warning", description: "Flooding alerts and evacuation notices", category: "flood" },
+    { key: "tsunami_warning", label: "Tsunami Warning", description: "Tsunami warnings and coastal evacuation", category: "tsunami" },
   ];
 }

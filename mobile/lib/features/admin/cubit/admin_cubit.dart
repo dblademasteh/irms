@@ -126,9 +126,9 @@ class AdminCubit extends Cubit<AdminState> {
     });
   }
 
-  Future<void> sendBroadcast(String message, {String? targetRole}) async {
+  Future<void> sendBroadcast(String message, {String? category, String? targetRole}) async {
     await _executeWithState((users, analytics, contacts, categories, inviteCodes, barangays, incidents, units) async {
-      await _repo.sendBroadcast(message, targetRole: targetRole);
+      await _repo.sendBroadcast(message, category: category, targetRole: targetRole);
       final refreshedAnalytics = await _repo.getAnalytics();
       emit(AdminLoaded(users, refreshedAnalytics, contacts, categories, inviteCodes, barangays, incidents, units));
     });

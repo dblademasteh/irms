@@ -25,9 +25,10 @@ class AdminRepo {
     return resp.data['analytics'];
   }
 
-  Future<void> sendBroadcast(String message, {String? targetRole}) async {
+  Future<void> sendBroadcast(String message, {String? category, String? targetRole}) async {
     await _api.dio.post('/admin/broadcast', data: {
       'message': message,
+      if (category != null) 'category': category,
       if (targetRole != null) 'target_role': targetRole,
     });
   }
@@ -42,7 +43,7 @@ class AdminRepo {
     return resp.data['templates'];
   }
 
-  Future<String> generateBroadcast({
+  Future<Map<String, String>> generateBroadcast({
     required String template,
     String? details,
     String? barangay,
@@ -52,7 +53,10 @@ class AdminRepo {
       if (details != null && details.isNotEmpty) 'details': details,
       if (barangay != null && barangay.isNotEmpty) 'barangay': barangay,
     });
-    return resp.data['message'] as String;
+    return {
+      'message': resp.data['message'] as String,
+      'category': resp.data['category'] as String,
+    };
   }
 
   Future<List<dynamic>> getContacts() async {

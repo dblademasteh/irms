@@ -2455,6 +2455,8 @@ class _BroadcastSheetBodyState extends State<_BroadcastSheetBody> {
   bool _sending = false;
   bool _generating = false;
   String? _selectedTemplate;
+  String _selectedCategory = 'emergency';
+  String _targetRole = 'all';
 
   static const _templates = [
     {'key': 'general_emergency', 'label': 'General Emergency'},
@@ -2480,6 +2482,8 @@ class _BroadcastSheetBodyState extends State<_BroadcastSheetBody> {
         'template': _selectedTemplate,
       });
       final message = resp.data['message'] as String;
+      final category = resp.data['category'] as String;
+      setState(() => _selectedCategory = category);
       widget.ctrl.text = message;
     } catch (e) {
       if (context.mounted) {
@@ -2574,6 +2578,51 @@ class _BroadcastSheetBodyState extends State<_BroadcastSheetBody> {
               filled: true,
             ),
           ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _selectedCategory,
+                  isDense: true,
+                  decoration: InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'emergency', child: Text('Emergency')),
+                    DropdownMenuItem(value: 'weather', child: Text('Weather')),
+                    DropdownMenuItem(value: 'traffic', child: Text('Traffic')),
+                    DropdownMenuItem(value: 'earthquake', child: Text('Earthquake')),
+                    DropdownMenuItem(value: 'flood', child: Text('Flood')),
+                    DropdownMenuItem(value: 'tsunami', child: Text('Tsunami')),
+                    DropdownMenuItem(value: 'system', child: Text('System')),
+                    DropdownMenuItem(value: 'safety', child: Text('Safety')),
+                  ],
+                  onChanged: (v) => setState(() => _selectedCategory = v ?? 'emergency'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _targetRole,
+                  isDense: true,
+                  decoration: InputDecoration(
+                    labelText: 'Recipients',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'all', child: Text('Everyone')),
+                    DropdownMenuItem(value: 'reporters', child: Text('Reporters')),
+                    DropdownMenuItem(value: 'dispatchers', child: Text('Dispatchers')),
+                  ],
+                  onChanged: (v) => setState(() => _targetRole = v ?? 'all'),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 24),
           FilledButton.icon(
             onPressed: _sending
@@ -2583,7 +2632,11 @@ class _BroadcastSheetBodyState extends State<_BroadcastSheetBody> {
                     if (msg.isEmpty) return;
                     setState(() => _sending = true);
                     try {
-                      await context.read<AdminCubit>().sendBroadcast(msg);
+                      await context.read<AdminCubit>().sendBroadcast(
+                        msg,
+                        category: _selectedCategory,
+                        targetRole: _targetRole,
+                      );
                       if (context.mounted) Navigator.pop(context);
                     } catch (e) {
                       setState(() => _sending = false);

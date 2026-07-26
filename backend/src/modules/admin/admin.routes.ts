@@ -145,13 +145,13 @@ export async function registerAdminRoutes(app: FastifyInstance) {
         barangay: z.string().max(200).optional(),
       }).parse(req.body);
 
-      const message = await generateAnnouncement({
+      const result = await generateAnnouncement({
         template: body.template as any,
         details: body.details,
         barangay: body.barangay,
       });
 
-      return { message };
+      return { message: result.message, category: result.category };
     }
   );
 
