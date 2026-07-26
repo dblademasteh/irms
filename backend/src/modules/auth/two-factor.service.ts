@@ -1,12 +1,13 @@
 import crypto from "crypto";
 import { base32 } from "@scure/base";
 
-export function generateTotpSecret(): { secret: string; uri: string } {
+export function generateTotpSecret(email?: string): { secret: string; uri: string } {
   const raw = crypto.randomBytes(20);
   const secret = base32.encode(raw);
-  const label = encodeURIComponent("IRMS");
-  const issuer = encodeURIComponent("IRMS");
-  const uri = `otpauth://totp/${label}?secret=${secret}&issuer=${issuer}&algorithm=SHA1&digits=6&period=30`;
+  const issuer = "IRMS";
+  const account = email || "user";
+  const label = `${encodeURIComponent(issuer)}:${encodeURIComponent(account)}`;
+  const uri = `otpauth://totp/${label}?secret=${secret}&issuer=${encodeURIComponent(issuer)}`;
   return { secret, uri };
 }
 

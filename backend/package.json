@@ -20,6 +20,7 @@
     "@fastify/cors": "^11.3.0",
     "@fastify/multipart": "^10.1.0",
     "@fastify/static": "^10.1.0",
+    "@scure/base": "^2.2.0",
     "argon2": "^0.41.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

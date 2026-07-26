@@ -538,11 +538,12 @@ builder: (ctx) => _UnitsSheet(theme: theme),
   }
 
   void _showActiveSessionsSheet(BuildContext context) {
-    final theme = Theme.of(context);
+    final dio = context.read<DioClient>();
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => _ActiveSessionsSheet(theme: theme),
+      builder: (ctx) => _ActiveSessionsSheet(theme: Theme.of(context), dio: dio),
     );
   }
 
@@ -623,53 +624,59 @@ builder: (ctx) => _UnitsSheet(theme: theme),
 
 class _ActiveSessionsSheet extends StatefulWidget {
   final ThemeData theme;
-  const _ActiveSessionsSheet({required this.theme});
+  final DioClient dio;
+  const _ActiveSessionsSheet({required this.theme, required this.dio});
 
   @override
   State<_ActiveSessionsSheet> createState() => _ActiveSessionsSheetState();
 }
 
 class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
-  String _deviceName = 'Unknown Device';
-  String _loginTime = 'Unknown';
-  String _loginDate = 'Unknown';
-  int _connectedUsers = 0;
-  bool _loadingCount = true;
+  List<Map<String, dynamic>> _sessions = [];
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadSessionInfo();
-    _loadConnectedCount();
+    _loadSessions();
   }
 
-  Future<void> _loadSessionInfo() async {
-    final prefs = await SharedPreferences.getInstance();
-    final now = DateTime.now();
-    setState(() {
-      _deviceName = prefs.getString('device_name') ?? _getDeviceType();
-      _loginDate = '${now.day}/${now.month}/${now.year}';
-      _loginTime = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    });
-  }
-
-  Future<void> _loadConnectedCount() async {
+  Future<void> _loadSessions() async {
     try {
-      final repo = AuthRepo(context.read<DioClient>());
-      final count = await repo.getSessionCount();
-      if (mounted) setState(() { _connectedUsers = count; _loadingCount = false; });
-    } catch (_) {
-      if (mounted) setState(() => _loadingCount = false);
+      final repo = AuthRepo(widget.dio);
+      final sessions = await repo.getSessions();
+      if (mounted) setState(() { _sessions = sessions; _loading = false; });
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }
   }
 
-  String _getDeviceType() {
-    if (kIsWeb) return 'Web Browser';
-    return 'Mobile Device';
+  Future<void> _revokeSession(String sessionId) async {
+    try {
+      final repo = AuthRepo(widget.dio);
+      await repo.revokeSession(sessionId);
+      if (mounted) {
+        setState(() { _sessions.removeWhere((s) => s['id'] == sessionId); });
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Session revoked')));
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+    }
+  }
+
+  String _formatUserAgent(String? ua) {
+    if (ua == null || ua.isEmpty) return 'Unknown device';
+    if (ua.toLowerCase().contains('android')) return 'Android Device';
+    if (ua.toLowerCase().contains('iphone') || ua.toLowerCase().contains('ipad')) return 'iOS Device';
+    if (ua.toLowerCase().contains('chrome')) return 'Chrome Browser';
+    if (ua.toLowerCase().contains('firefox')) return 'Firefox Browser';
+    return ua.length > 40 ? '${ua.substring(0, 40)}...' : ua;
   }
 
   @override
   Widget build(BuildContext context) {
+    final currentCount = _sessions.length;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -696,45 +703,24 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
               ),
               child: Row(
                 children: [
-                  Stack(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(Icons.people, color: Colors.white, size: 28),
-                      ),
-                      if (!_loadingCount)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: Colors.greenAccent,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: widget.theme.colorScheme.primary, width: 2),
-                            ),
-                          ),
-                        ),
-                    ],
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.people, color: Colors.white, size: 28),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Connected Users', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
+                        const Text('Total Sessions', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
                         const SizedBox(height: 4),
-                        _loadingCount
+                        _loading
                             ? const Text('--', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900))
-                            : Text(
-                                _connectedUsers.toString(),
-                                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900),
-                              ),
+                            : Text('$currentCount', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
                       ],
                     ),
                   ),
@@ -749,7 +735,7 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
                       children: [
                         Icon(Icons.circle, color: Colors.greenAccent, size: 8),
                         const SizedBox(width: 6),
-                        Text(_loadingCount ? '...' : 'Live', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                        Text(_loading ? '...' : 'Live', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -757,84 +743,115 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
               ),
             ),
             const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: widget.theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: widget.theme.colorScheme.primary.withValues(alpha: 0.2)),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(color: widget.theme.colorScheme.primary.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(10)),
-                        child: Icon(Icons.smartphone, color: widget.theme.colorScheme.primary),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('This Device', style: TextStyle(fontWeight: FontWeight.w700)),
-                            const SizedBox(height: 4),
-                            Text(_deviceName, style: TextStyle(fontSize: 12, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.5))),
-                          ],
+            if (_loading)
+              const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()))
+            else if (_error != null)
+              Center(child: Padding(padding: const EdgeInsets.all(32), child: Text(_error!, style: TextStyle(color: widget.theme.colorScheme.error))))
+            else if (_sessions.isEmpty)
+              const Center(child: Padding(padding: EdgeInsets.all(32), child: Text('No active sessions')))
+            else
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _sessions.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (ctx, i) {
+                    final session = _sessions[i];
+                    final isCurrent = session['current'] == true;
+                    final sessionId = session['id'] as String;
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isCurrent
+                            ? widget.theme.colorScheme.primary.withValues(alpha: 0.1)
+                            : widget.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: isCurrent
+                              ? widget.theme.colorScheme.primary.withValues(alpha: 0.3)
+                              : widget.theme.colorScheme.outline.withValues(alpha: 0.15),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                        child: const Text('Active', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.green)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  const Divider(),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
-                          Text('Last active', style: TextStyle(fontSize: 11, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.5))),
-                          const SizedBox(height: 2),
-                          Text('Today, $_loginTime', style: const TextStyle(fontWeight: FontWeight.w600)),
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isCurrent
+                                  ? widget.theme.colorScheme.primary.withValues(alpha: 0.2)
+                                  : widget.theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              isCurrent ? Icons.smartphone : Icons.computer,
+                              color: isCurrent ? widget.theme.colorScheme.primary : widget.theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        _formatUserAgent(session['userAgent'] as String?),
+                                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (isCurrent) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                        decoration: BoxDecoration(color: Colors.green.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                                        child: const Text('Current', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: Colors.green)),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                if (session['ip'] != null)
+                                  Text('IP: ${session['ip']}', style: TextStyle(fontSize: 12, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                                if (session['createdAt'] != null)
+                                  Text('Since: ${session['createdAt']}', style: TextStyle(fontSize: 11, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.4))),
+                              ],
+                            ),
+                          ),
+                          if (!isCurrent)
+                            IconButton(
+                              icon: Icon(Icons.remove_circle_outline, color: widget.theme.colorScheme.error.withValues(alpha: 0.7), size: 22),
+                              onPressed: () => _revokeSession(sessionId),
+                              tooltip: 'Revoke session',
+                            ),
                         ],
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text('Login date', style: TextStyle(fontSize: 11, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.5))),
-                          const SizedBox(height: 2),
-                          Text(_loginDate, style: const TextStyle(fontWeight: FontWeight.w600)),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+                    );
+                  },
+                ),
               ),
-            ),
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: () async {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.clear();
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('All sessions cleared')));
+                onPressed: _sessions.isEmpty ? null : () async {
+                  final repo = AuthRepo(widget.dio);
+                  for (final s in _sessions) {
+                    if (s['current'] != true) {
+                      try { await repo.revokeSession(s['id'] as String); } catch (_) {}
+                    }
+                  }
+                  if (mounted) {
+                    setState(() => _sessions = _sessions.where((s) => s['current'] == true).toList());
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Other sessions revoked')));
                   }
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Logout All Devices'),
+                child: const Text('Logout Other Devices'),
               ),
             ),
             const SizedBox(height: 16),

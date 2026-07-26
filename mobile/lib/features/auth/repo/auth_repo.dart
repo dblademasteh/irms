@@ -65,8 +65,22 @@ class AuthRepo {
   }
 
   Future<int> getSessionCount() async {
-    final resp = await _dio.dio.get('/auth/sessions/count');
-    return resp.data['count'] as int;
+    try {
+      final resp = await _dio.dio.get('/auth/sessions/count');
+      return resp.data['count'] as int;
+    } catch (_) {
+      final sessions = await getSessions();
+      return sessions.length;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getSessions() async {
+    final resp = await _dio.dio.get('/auth/sessions');
+    return List<Map<String, dynamic>>.from(resp.data['sessions'] as List);
+  }
+
+  Future<void> revokeSession(String sessionId) async {
+    await _dio.dio.post('/auth/sessions/revoke', data: {'sessionId': sessionId});
   }
 
   Future<Map<String, dynamic>> createInviteCode() async {

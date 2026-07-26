@@ -1,10 +1,10 @@
-import { FastifyInstance } from "fastify";
+import { FastifyInstance, FastifyRequest } from "fastify";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { config } from "../common/config.js";
 import { errors } from "../common/errors.js";
 import { signAccessToken, signRefreshToken, verifyToken } from "../common/jwt.js";
-import { trackSession, untrackSession, getActiveSessionCount } from "../common/redis.js";
+import { trackSession, untrackSession, getActiveSessionCount, getUserSessions, getCurrentSessionJti, getCurrentSessionMeta, SessionMeta } from "../common/redis.js";
 import { authGuard } from "../common/auth-guard.js";
 import * as repo from "./auth.repo.js";
 import * as inviteRepo from "../contacts/invite-codes.repo.js";
@@ -33,6 +33,16 @@ const deviceSchema = z.object({
   fcmToken: z.string().min(1).optional(),
   apnsToken: z.string().min(1).optional(),
 });
+
+function sessionMeta(userId: string, jti: string, req: FastifyRequest): SessionMeta {
+  return {
+    userId,
+    jti,
+    userAgent: req.headers["user-agent"] ?? "Unknown Device",
+    ip: req.ip,
+    createdAt: new Date().toISOString(),
+  };
+}
 
 export async function registerAuthRoutes(app: FastifyInstance) {
   app.post("/auth/register", async (req, reply) => {
@@ -70,7 +80,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       userId: user.id,
       role: user.role,
     });
-    await trackSession(jti, config.jwt.refreshTtl);
+    await trackSession(jti, config.jwt.refreshTtl, sessionMeta(user.id, jti, req));
 
     return reply.code(201).send({
       token: access,
@@ -101,7 +111,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       userId: user.id,
       role: user.role,
     });
-    await trackSession(jti, config.jwt.refreshTtl);
+    await trackSession(jti, config.jwt.refreshTtl, sessionMeta(user.id, jti, req));
 
     const { password_hash, ...safe } = user;
     return reply.send({ token: access, refreshToken: refresh, user: safe });
@@ -119,7 +129,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     return reply.send({ token: access, refreshToken });
   });
 
-  app.get("/auth/sessions/count", { preHandler: authGuard() }, async () => {
+  app.get("/auth/sessions/count", { preHandler: authGuard(["admin"]) }, async () => {
     const count = await getActiveSessionCount();
     return { count };
   });
@@ -190,7 +200,8 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   });
 
   app.post("/auth/2fa/setup", { preHandler: authGuard() }, async (req, reply) => {
-    const { secret, uri } = generateTotpSecret();
+    const user = await repo.findById(req.user!.userId);
+    const { secret, uri } = generateTotpSecret(user?.email ?? undefined);
     await repo.save2FaSecret(req.user!.userId, secret);
     return reply.send({ secret, uri });
   });
@@ -236,7 +247,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
 
     const access = signAccessToken({ userId: payload.userId, role: payload.role });
     const { token: refresh, jti } = signRefreshToken({ userId: payload.userId, role: payload.role });
-    await trackSession(jti, config.jwt.refreshTtl);
+    await trackSession(jti, config.jwt.refreshTtl, sessionMeta(payload.userId, jti, req));
 
     const user = await repo.findByIdWithPassword(payload.userId);
     const { password_hash: _, ...safe } = user!;
@@ -244,16 +255,16 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   });
 
   app.get("/auth/sessions", { preHandler: authGuard() }, async (req, reply) => {
+    const currentJti = await getCurrentSessionJti(req.user!.userId);
+    const sessions = await getUserSessions(req.user!.userId);
     return reply.send({
-      sessions: [
-        {
-          id: "current-session",
-          userAgent: req.headers["user-agent"] ?? "Unknown Device",
-          ip: req.ip,
-          current: true,
-          createdAt: new Date().toISOString(),
-        },
-      ],
+      sessions: sessions.map(s => ({
+        id: s.jti,
+        userAgent: s.userAgent,
+        ip: s.ip,
+        current: s.jti === currentJti,
+        createdAt: s.createdAt,
+      })),
     });
   });
 
