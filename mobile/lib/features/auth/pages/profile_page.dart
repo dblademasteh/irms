@@ -522,7 +522,21 @@ builder: (ctx) => _UnitsSheet(theme: theme),
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => _AppInfoSheet(theme: theme, onHelpSupportTap: () => _showHelpSupportSheet(ctx)),
+      builder: (ctx) => _AppInfoSheet(
+              theme: theme,
+              onHelpSupportTap: () {
+                Navigator.pop(ctx);
+                _showHelpSupportSheet(context);
+              },
+              onPrivacyPolicyTap: () {
+                Navigator.pop(ctx);
+                _showPrivacyPolicySheet(context);
+              },
+              onTermsOfServiceTap: () {
+                Navigator.pop(ctx);
+                _showTermsOfServiceSheet(context);
+              },
+            ),
     );
   }
 
@@ -533,6 +547,26 @@ builder: (ctx) => _UnitsSheet(theme: theme),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _HelpSupportSheet(theme: theme),
+    );
+  }
+
+  void _showPrivacyPolicySheet(BuildContext context) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => _PrivacyPolicySheet(theme: theme),
+    );
+  }
+
+  void _showTermsOfServiceSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => _TermsOfServiceSheet(theme: theme),
     );
   }
 }
@@ -764,7 +798,9 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
 class _AppInfoSheet extends StatelessWidget {
   final ThemeData theme;
   final VoidCallback? onHelpSupportTap;
-  const _AppInfoSheet({required this.theme, this.onHelpSupportTap});
+  final VoidCallback? onPrivacyPolicyTap;
+  final VoidCallback? onTermsOfServiceTap;
+  const _AppInfoSheet({required this.theme, this.onHelpSupportTap, this.onPrivacyPolicyTap, this.onTermsOfServiceTap});
 
   static Future<void> _openUrl(String url) async {
     final uri = Uri.parse(url);
@@ -797,8 +833,8 @@ class _AppInfoSheet extends StatelessWidget {
             _InfoRow(icon: Icons.flutter_dash, label: 'Framework', value: 'Flutter', theme: theme),
             const Divider(height: 32),
             _LinkRow(icon: Icons.help_outline, label: 'Help & Support', onTap: () => onHelpSupportTap?.call(), theme: theme),
-            _LinkRow(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () => _AppInfoSheet._openUrl('https://irms.local/privacy'), theme: theme),
-            _LinkRow(icon: Icons.description_outlined, label: 'Terms of Service', onTap: () => _AppInfoSheet._openUrl('https://irms.local/terms'), theme: theme),
+            _LinkRow(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () => onPrivacyPolicyTap?.call(), theme: theme),
+            _LinkRow(icon: Icons.description_outlined, label: 'Terms of Service', onTap: () => onTermsOfServiceTap?.call(), theme: theme),
             const SizedBox(height: 16),
           ],
         ),
@@ -1872,6 +1908,315 @@ class _SupportCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PrivacyPolicySheet extends StatefulWidget {
+  final ThemeData theme;
+  const _PrivacyPolicySheet({required this.theme});
+
+  @override
+  State<_PrivacyPolicySheet> createState() => _PrivacyPolicySheetState();
+}
+
+class _PrivacyPolicySheetState extends State<_PrivacyPolicySheet> {
+  bool _consentGiven = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: widget.theme.colorScheme.outline.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: widget.theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                      child: Icon(Icons.privacy_tip, color: widget.theme.colorScheme.primary, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Privacy Policy', style: widget.theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                          Text('Data Privacy Act compliance', style: TextStyle(fontSize: 12, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(color: widget.theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
+                      child: Text('v1.0', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: widget.theme.colorScheme.primary)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    children: [
+                      _PolicySection(
+                        theme: widget.theme,
+                        icon: Icons.storage,
+                        title: '1. Information We Collect',
+                        content: 'We collect personal information that you voluntarily provide when registering an account, including your name, email address, phone number, and location data. We also collect device information such as device type, operating system, and unique device identifiers. Usage data including incident reports, alert preferences, and interaction logs are captured to improve service quality.',
+                      ),
+                      _PolicySection(
+                        theme: widget.theme,
+                        icon: Icons.widgets,
+                        title: '2. How We Use Your Information',
+                        content: 'Your information is used to provide and maintain the IRMS incident reporting service, notify you of relevant safety alerts in your area, dispatch emergency responders to reported incidents, and improve our platform functionality and user experience. We may aggregate anonymized data for statistical analysis to enhance public safety systems.',
+                      ),
+                      _PolicySection(
+                        theme: widget.theme,
+                        icon: Icons.share,
+                        title: '3. Data Sharing & Disclosure',
+                        content: 'Personal information may be shared with authorized government agencies, law enforcement, and emergency response units when necessary to respond to reported incidents. We do not sell your personal data to third parties. Data may be disclosed when required by law, court order, or to protect the safety of individuals.',
+                      ),
+                      _PolicySection(
+                        theme: widget.theme,
+                        icon: Icons.shield,
+                        title: '4. Data Security',
+                        content: 'We implement appropriate technical and organizational security measures including encryption of data in transit and at rest, access controls and authentication requirements, regular security audits and vulnerability assessments, and secure storage with redundant backups. No system is completely secure, and we cannot guarantee absolute security.',
+                      ),
+                      _PolicySection(
+                        theme: widget.theme,
+                        icon: Icons.person,
+                        title: '5. Your Rights',
+                        content: 'You have the right to access your personal data and receive a copy, request correction of inaccurate information, request deletion of your data subject to legal retention requirements, withdraw consent at any time (where processing is consent-based), and lodge a complaint with a data protection authority if you believe your rights have been violated.',
+                      ),
+                      _PolicySection(
+                        theme: widget.theme,
+                        icon: Icons.timer,
+                        title: '6. Data Retention',
+                        content: 'Account data is retained while your account is active. Incident reports and associated data are retained for a minimum period as required by applicable laws and regulations. You may request account deletion, after which your data will be removed within 30 days, except where legal retention obligations apply.',
+                      ),
+                      _PolicySection(
+                        theme: widget.theme,
+                        icon: Icons.policy,
+                        title: '7. Cookies & Tracking',
+                        content: 'We use essential cookies to maintain session state and authentication. Analytics cookies help us understand app usage patterns to improve functionality. You can manage cookie preferences in your device settings. Disabling cookies may affect some app features.',
+                      ),
+                      _PolicySection(
+                        theme: widget.theme,
+                        icon: Icons.contact_mail,
+                        title: '8. Contact & Data Officer',
+                        content: 'For privacy concerns, contact our Data Protection Officer at privacy@irms.local. For incident reports or urgent safety matters, use the in-app emergency reporting feature or contact local authorities directly.',
+                      ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: widget.theme.colorScheme.primary.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: widget.theme.colorScheme.primary.withValues(alpha: 0.15)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.check_circle, color: widget.theme.colorScheme.primary, size: 20),
+                                const SizedBox(width: 8),
+                                Text('Consent Agreement', style: TextStyle(fontWeight: FontWeight.w800, color: widget.theme.colorScheme.primary)),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'By using IRMS, you acknowledge that you have read, understood, and agree to the collection, use, and processing of your personal information as described in this Privacy Policy. You consent to the sharing of your information with authorized responders and agencies for the purpose of incident response and public safety.',
+                              style: TextStyle(fontSize: 13, height: 1.6, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+                            ),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              child: FilledButton(
+                                onPressed: () => setState(() => _consentGiven = !_consentGiven),
+                                style: FilledButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  backgroundColor: _consentGiven ? widget.theme.colorScheme.primary : widget.theme.colorScheme.surfaceContainerHighest,
+                                  foregroundColor: _consentGiven ? Colors.white : widget.theme.colorScheme.onSurface,
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(_consentGiven ? Icons.check_circle : Icons.circle_outlined, size: 18),
+                                    const SizedBox(width: 8),
+                                    Text(_consentGiven ? 'Consent Given' : 'Give Consent'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PolicySection extends StatelessWidget {
+  final ThemeData theme;
+  final IconData icon;
+  final String title;
+  final String content;
+  const _PolicySection({required this.theme, required this.icon, required this.title, required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: theme.colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(content, style: TextStyle(fontSize: 12.5, height: 1.6, color: theme.colorScheme.onSurface.withValues(alpha: 0.65))),
+        ],
+      ),
+    );
+  }
+}
+
+class _TermsOfServiceSheet extends StatelessWidget {
+  final ThemeData theme;
+  const _TermsOfServiceSheet({required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.85,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.colorScheme.outline.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                      child: Icon(Icons.gavel, color: theme.colorScheme.primary, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Terms of Service', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                          Text('Effective date: July 2026', style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    children: [
+                      _TosSection(theme: theme, number: '1', title: 'Acceptance of Terms', content: 'By accessing or using the IRMS mobile application and services, you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any part of these terms, you must not use the service.'),
+                      _TosSection(theme: theme, number: '2', title: 'Description of Service', content: 'IRMS provides an incident reporting and management system for reporting safety incidents, receiving emergency alerts, and coordinating with dispatch services. The service is provided as-is and may be updated, modified, or discontinued at any time without prior notice.'),
+                      _TosSection(theme: theme, number: '3', title: 'User Eligibility', content: 'You must be at least 18 years of age to create an account. Minors may use the service under the supervision of a parent or legal guardian who accepts these terms on their behalf. You are responsible for ensuring your use of the service complies with local laws in your jurisdiction.'),
+                      _TosSection(theme: theme, number: '4', title: 'Account Responsibilities', content: 'You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You agree to notify IRMS immediately of any unauthorized use. You must provide accurate and complete information during registration and keep your profile updated.'),
+                      _TosSection(theme: theme, number: '5', title: 'Incident Reporting Guidelines', content: 'When reporting incidents, you must provide accurate and truthful information. False, misleading, or malicious reports are strictly prohibited and may result in account termination. You may not use the reporting system for non-emergency purposes or spam. Repeated abuse of the incident reporting feature may lead to suspension or permanent ban from the platform.'),
+                      _TosSection(theme: theme, number: '6', title: 'Prohibited Activities', content: 'You agree not to: (a) use the service for any illegal purpose; (b) submit false emergency reports or hoax alerts; (c) attempt to gain unauthorized access to any part of the system; (d) interfere with or disrupt the service or servers; (e) collect user information without consent; (f) transmit any malware or harmful code; (g) impersonate any person or entity.'),
+                      _TosSection(theme: theme, number: '7', title: 'Emergency Services', content: 'IRMS is not a substitute for contacting local emergency services (police, fire, medical) directly. In a life-threatening emergency, always call your local emergency number immediately. While we endeavor to route reports to appropriate responders, we do not guarantee response times or that a response will be dispatched.'),
+                      _TosSection(theme: theme, number: '8', title: 'Disclaimer of Warranties', content: 'THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND. IRMS DOES NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, SECURE, OR ERROR-FREE. WE MAKE NO WARRANTIES ABOUT THE ACCURACY, RELIABILITY, OR COMPLETENESS OF ANY INFORMATION PROVIDED THROUGH THE SERVICE.'),
+                      _TosSection(theme: theme, number: '9', title: 'Limitation of Liability', content: 'TO THE MAXIMUM EXTENT PERMITTED BY LAW, IRMS SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES ARISING FROM YOUR USE OF OR INABILITY TO USE THE SERVICE. IN NO EVENT SHALL OUR TOTAL LIABILITY EXCEED THE AMOUNT YOU PAID US IN THE PAST TWELVE MONTHS, IF ANY.'),
+                      _TosSection(theme: theme, number: '10', title: 'Termination', content: 'We may terminate or suspend your account immediately, without prior notice, for any reason including breach of these Terms. Upon termination, your right to use the service will cease immediately. Provisions that by their nature should survive termination shall survive, including ownership, warranties, indemnification, and limitations of liability.'),
+                      _TosSection(theme: theme, number: '11', title: 'Changes to Terms', content: 'We reserve the right to modify these terms at any time. Changes will be effective upon posting to the application. Your continued use after changes constitutes acceptance of the modified terms. We encourage you to review these terms periodically.'),
+                      _TosSection(theme: theme, number: '12', title: 'Governing Law', content: 'These Terms shall be governed by and construed in accordance with applicable laws. Any disputes arising from these terms or your use of the service shall be resolved through binding arbitration or in the courts of competent jurisdiction.'),
+                      _TosSection(theme: theme, number: '13', title: 'Contact', content: 'For questions about these Terms, contact us at legal@irms.local. For emergency situations, use the in-app emergency reporting feature or contact local authorities directly.'),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TosSection extends StatelessWidget {
+  final ThemeData theme;
+  final String number;
+  final String title;
+  final String content;
+  const _TosSection({required this.theme, required this.number, required this.title, required this.content});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 24, height: 24,
+                decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(6)),
+                child: Center(child: Text(number, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: Colors.white))),
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13))),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(content, style: TextStyle(fontSize: 12.5, height: 1.6, color: theme.colorScheme.onSurface.withValues(alpha: 0.65))),
+        ],
       ),
     );
   }
