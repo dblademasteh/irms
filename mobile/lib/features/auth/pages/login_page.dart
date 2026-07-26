@@ -49,6 +49,23 @@ class _LoginPageState extends State<LoginPage> {
           }
         },
         builder: (ctx, state) {
+          if (state is Auth2FaRequired) {
+            return isWide
+                ? Row(
+                    children: [
+                      Expanded(flex: 5, child: Container(color: theme.colorScheme.primary)),
+                      Expanded(flex: 4, child: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(48), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 400), child: _TwoFaChallengeWidget(state: state)))))
+                    ],
+                  )
+                : SafeArea(
+                    child: Column(
+                      children: [
+                        Padding(padding: const EdgeInsets.fromLTRB(24, 16, 24, 0), child: Row(children: [Container(decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: IconButton(icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary), onPressed: () => context.read<AuthCubit>().cancel2FaChallenge()),)])),
+                        Expanded(child: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(24), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420), child: _TwoFaChallengeWidget(state: state))))),
+                      ],
+                    ),
+                  );
+          }
           return isWide
               ? _buildWideLayout(context, theme, loc, state)
               : _buildNarrowLayout(context, theme, loc, state);
@@ -691,6 +708,96 @@ class _LoginPageState extends State<LoginPage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TwoFaChallengeWidget extends StatefulWidget {
+  final Auth2FaRequired state;
+  const _TwoFaChallengeWidget({required this.state});
+
+  @override
+  State<_TwoFaChallengeWidget> createState() => _TwoFaChallengeWidgetState();
+}
+
+class _TwoFaChallengeWidgetState extends State<_TwoFaChallengeWidget> {
+  String _code = '';
+  String? _error;
+  bool _verifying = false;
+
+  void _verify() {
+    if (_code.length != 6) return;
+    setState(() { _verifying = true; _error = null; });
+    context.read<AuthCubit>().verify2FaChallenge(
+          challengeToken: widget.state.challengeToken,
+          code: _code,
+        );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.verified_user_outlined, size: 32, color: theme.colorScheme.primary),
+              ),
+              const SizedBox(height: 16),
+              Text('Two-Factor Authentication', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+              const SizedBox(height: 6),
+              Text('Enter the 6-digit code from your\nGoogle Authenticator app',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5), height: 1.4)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 28),
+        TextField(
+          onChanged: (v) => setState(() { _code = v.replaceAll(RegExp(r'\D'), ''); }),
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 10),
+          decoration: InputDecoration(
+            hintText: '000000',
+            hintStyle: TextStyle(color: theme.colorScheme.outline.withValues(alpha: 0.3), letterSpacing: 10),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+            counterText: '',
+          ),
+          onSubmitted: (_) => _verify(),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(_error!, style: TextStyle(color: theme.colorScheme.error, fontSize: 13)),
+        ],
+        const SizedBox(height: 20),
+        FilledButton(
+          onPressed: (_code.length == 6 && !_verifying) ? _verify : null,
+          style: FilledButton.styleFrom(minimumSize: const Size(double.infinity, 52)),
+          child: _verifying
+              ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.lock_open, size: 20), SizedBox(width: 8), Text('Verify & Sign In')]),
+        ),
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed: () => context.read<AuthCubit>().cancel2FaChallenge(),
+          child: Text('Cancel and go back', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.4))),
+        ),
+      ],
     );
   }
 }

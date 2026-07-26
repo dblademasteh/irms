@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme.dart';
@@ -202,10 +203,16 @@ _SectionItem(
                     theme,
                     title: 'Security',
                     items: [
-                      _SectionItem(
+_SectionItem(
                         icon: Icons.lock_outlined,
                         title: 'Change Password',
                         onTap: () => _showChangePasswordSheet(context),
+                      ),
+                      _SectionItem(
+                        icon: Icons.verified_user_outlined,
+                        title: 'Two-Factor Authentication',
+                        subtitle: 'Google Authenticator',
+                        onTap: () => _showTwoFactorSheet(context),
                       ),
                       if (!kIsWeb)
                         _SectionItem(
@@ -536,6 +543,17 @@ builder: (ctx) => _UnitsSheet(theme: theme),
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _ActiveSessionsSheet(theme: theme),
+    );
+  }
+
+  void _showTwoFactorSheet(BuildContext context) {
+    final dio = context.read<DioClient>();
+    final authCubit = context.read<AuthCubit>();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => _TwoFactorSetupSheet(theme: Theme.of(context), dio: dio, authCubit: authCubit),
     );
   }
 
@@ -1106,6 +1124,188 @@ class _InviteLinkSheetState extends State<_InviteLinkSheet> {
 
   String _formatDate(DateTime dt) {
     return '${dt.day}/${dt.month}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+}
+
+class _TwoFactorSetupSheet extends StatefulWidget {
+  final ThemeData theme;
+  final DioClient dio;
+  final AuthCubit authCubit;
+  const _TwoFactorSetupSheet({required this.theme, required this.dio, required this.authCubit});
+
+  @override
+  State<_TwoFactorSetupSheet> createState() => _TwoFactorSetupSheetState();
+}
+
+class _TwoFactorSetupSheetState extends State<_TwoFactorSetupSheet> {
+  String? _secret;
+  String? _otpUri;
+  bool _loading = false;
+  bool _verifying = false;
+  String _code = '';
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkStatus();
+  }
+
+  Future<void> _checkStatus() async {
+    setState(() => _loading = true);
+    try {
+      final repo = AuthRepo(widget.dio);
+      final result = await repo.setup2Fa();
+      setState(() {
+        _secret = result['secret'] as String;
+        _otpUri = result['uri'] as String;
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to setup 2FA: $e')));
+        Navigator.pop(context);
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _verify() async {
+    if (_code.length != 6) return;
+    setState(() { _verifying = true; _error = null; });
+    try {
+      final repo = AuthRepo(widget.dio);
+      await repo.verify2FaSetup(_code);
+      await Future.delayed(const Duration(seconds: 1));
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      setState(() => _error = 'Invalid code. Try again.');
+    } finally {
+      if (mounted) setState(() => _verifying = false);
+    }
+  }
+
+  Future<void> _disable() async {
+    try {
+      final repo = AuthRepo(widget.dio);
+      await repo.disable2Fa();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('2FA has been disabled')));
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: widget.theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                        child: Column(
+                          children: [
+                            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: widget.theme.colorScheme.outline.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Icon(Icons.verified_user_outlined, color: widget.theme.colorScheme.primary),
+                                const SizedBox(width: 12),
+                                Text('Two-Factor Authentication', style: widget.theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text('Scan the QR code with Google Authenticator', style: TextStyle(color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView(
+                          controller: scrollController,
+                          padding: const EdgeInsets.all(24),
+                          children: [
+                            if (_otpUri != null)
+                              Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                                  child: QrImageView(data: _otpUri!, version: QrVersions.auto, size: 200),
+                                ),
+                              ),
+                            const SizedBox(height: 20),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: widget.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Manual Key', style: TextStyle(fontWeight: FontWeight.w600, color: widget.theme.colorScheme.primary)),
+                                  const SizedBox(height: 8),
+                                  Text(_secret ?? '', style: const TextStyle(fontFamily: 'monospace', fontSize: 16, letterSpacing: 2)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text('Open Google Authenticator → Add account → Scan barcode or enter key manually', style: TextStyle(fontSize: 12, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.4))),
+                            const SizedBox(height: 24),
+                            TextField(
+                              onChanged: (v) => setState(() { _code = v.replaceAll(RegExp(r'\D'), ''); }),
+                              keyboardType: TextInputType.number,
+                              maxLength: 6,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 8),
+                              decoration: InputDecoration(
+                                hintText: '000000',
+                                hintStyle: TextStyle(color: widget.theme.colorScheme.outline.withValues(alpha: 0.3), letterSpacing: 8),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                                counterText: '',
+                              ),
+                            ),
+                            if (_error != null) ...[
+                              const SizedBox(height: 8),
+                              Text(_error!, style: TextStyle(color: widget.theme.colorScheme.error, fontSize: 13)),
+                            ],
+                            const SizedBox(height: 16),
+                            FilledButton(
+                              onPressed: (_code.length == 6 && !_verifying) ? _verify : null,
+                              style: FilledButton.styleFrom(minimumSize: const Size(double.infinity, 52)),
+                              child: _verifying
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  : const Text('Verify & Enable'),
+                            ),
+                            const SizedBox(height: 12),
+                            OutlinedButton(
+                              onPressed: _disable,
+                              style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
+                              child: const Text('Disable 2FA'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        );
+      },
+    );
   }
 }
 

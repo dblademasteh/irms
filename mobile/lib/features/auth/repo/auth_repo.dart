@@ -106,4 +106,35 @@ class AuthRepo {
       'newPassword': newPassword,
     });
   }
+
+  Future<Map<String, dynamic>> setup2Fa() async {
+    final resp = await _dio.dio.post('/auth/2fa/setup');
+    return {
+      'secret': resp.data['secret'] as String,
+      'uri': resp.data['uri'] as String,
+    };
+  }
+
+  Future<void> verify2FaSetup(String code) async {
+    await _dio.dio.post('/auth/2fa/verify', data: {'code': code});
+  }
+
+  Future<void> disable2Fa() async {
+    await _dio.dio.post('/auth/2fa/disable');
+  }
+
+  Future<Map<String, dynamic>> verify2FaChallenge({
+    required String challengeToken,
+    required String code,
+  }) async {
+    final resp = await _dio.dio.post('/auth/2fa/challenge', data: {
+      'challengeToken': challengeToken,
+      'code': code,
+    });
+    return {
+      'token': resp.data['token'] as String,
+      'refreshToken': resp.data['refreshToken'] as String,
+      'user': resp.data['user'] as Map<String, dynamic>,
+    };
+  }
 }

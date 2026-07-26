@@ -1,4 +1,5 @@
 import { FastifyInstance } from "fastify";
+import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { config } from "../common/config.js";
 import { errors } from "../common/errors.js";
@@ -84,6 +85,16 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     if (!user) throw errors.unauthorized("Invalid credentials");
     const ok = await repo.verifyPassword(user.password_hash, body.password);
     if (!ok) throw errors.unauthorized("Invalid credentials");
+
+    const twoFaInfo = await repo.get2FaInfo(user.id);
+    if (twoFaInfo?.two_factor_enabled) {
+      const challengeToken = jwt.sign(
+        { userId: user.id, role: user.role, type: "2fa_challenge" },
+        config.jwt.secret,
+        { expiresIn: "5m" }
+      );
+      return reply.send({ requires2fa: true, challengeToken });
+    }
 
     const access = signAccessToken({ userId: user.id, role: user.role });
     const { token: refresh, jti } = signRefreshToken({
@@ -198,6 +209,38 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   app.post("/auth/2fa/disable", { preHandler: authGuard() }, async (req, reply) => {
     await repo.disable2Fa(req.user!.userId);
     return reply.send({ ok: true, message: "2FA disabled" });
+  });
+
+  app.post("/auth/2fa/challenge", async (req, reply) => {
+    const challengeSchema = z.object({
+      challengeToken: z.string().min(1),
+      code: z.string().length(6),
+    });
+    const { challengeToken, code } = challengeSchema.parse(req.body);
+
+    let payload: { userId: string; role: string; type: string };
+    try {
+      payload = jwt.verify(challengeToken, config.jwt.secret) as { userId: string; role: string; type: string };
+    } catch {
+      throw errors.unauthorized("Invalid or expired challenge token");
+    }
+    if (payload.type !== "2fa_challenge") throw errors.badRequest("Invalid challenge token type");
+
+    const info = await repo.get2FaInfo(payload.userId);
+    if (!info?.two_factor_enabled || !info?.two_factor_secret) {
+      throw errors.badRequest("2FA is not enabled for this account");
+    }
+
+    const ok = verifyTotpCode(info.two_factor_secret, code);
+    if (!ok) throw errors.unauthorized("Invalid 2FA verification code");
+
+    const access = signAccessToken({ userId: payload.userId, role: payload.role });
+    const { token: refresh, jti } = signRefreshToken({ userId: payload.userId, role: payload.role });
+    await trackSession(jti, config.jwt.refreshTtl);
+
+    const user = await repo.findByIdWithPassword(payload.userId);
+    const { password_hash: _, ...safe } = user!;
+    return reply.send({ token: access, refreshToken: refresh, user: safe });
   });
 
   app.get("/auth/sessions", { preHandler: authGuard() }, async (req, reply) => {

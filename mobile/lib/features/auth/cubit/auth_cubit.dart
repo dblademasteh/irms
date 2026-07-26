@@ -26,6 +26,15 @@ class Unauthenticated extends AuthState {
   List<Object?> get props => [error];
 }
 
+class Auth2FaRequired extends AuthState {
+  final String challengeToken;
+  final String email;
+  final String password;
+  Auth2FaRequired({required this.challengeToken, required this.email, required this.password});
+  @override
+  List<Object?> get props => [challengeToken, email];
+}
+
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepo _authRepo;
   final SecureStorage _storage;
@@ -70,6 +79,38 @@ class AuthCubit extends Cubit<AuthState> {
     emit(AuthLoading());
     try {
       final result = await _authRepo.login(email: email, password: password);
+      if (result['requires2fa'] == true) {
+        emit(Auth2FaRequired(
+          challengeToken: result['challengeToken'] as String,
+          email: email,
+          password: password,
+        ));
+        return;
+      }
+      await _storage.saveTokens(
+        accessToken: result['token'],
+        refreshToken: result['refreshToken'],
+      );
+      await _storage.saveUser(result['user']);
+      authNotifier.value = true;
+      roleNotifier.value = result['user']['role'] ?? 'reporter';
+      _safeConnectSocket();
+      emit(Authenticated(result['user']));
+    } catch (e) {
+      emit(Unauthenticated(error: _extractError(e)));
+    }
+  }
+
+  Future<void> verify2FaChallenge({
+    required String challengeToken,
+    required String code,
+  }) async {
+    emit(AuthLoading());
+    try {
+      final result = await _authRepo.verify2FaChallenge(
+        challengeToken: challengeToken,
+        code: code,
+      );
       await _storage.saveTokens(
         accessToken: result['token'],
         refreshToken: result['refreshToken'],
@@ -181,5 +222,9 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (e) {
       throw Exception(_extractError(e));
     }
+  }
+
+  void cancel2FaChallenge() {
+    emit(Unauthenticated());
   }
 }
