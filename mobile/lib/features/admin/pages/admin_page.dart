@@ -52,44 +52,44 @@ class _AdminPageState extends State<AdminPage> {
 
     switch (_selectedIndex) {
       case 2:
-        return FloatingActionButton.extended(
+        return FloatingActionButton.small(
+          heroTag: 'contact_fab',
           onPressed: () => showAddContactSheet(context, categories: categories),
-          icon: const Icon(Icons.add),
-          label: const Text('Add Contact'),
-        );
-      case 3:
-        return FloatingActionButton.extended(
-          onPressed: () => _showCreateCodeSheet(context),
-          icon: const Icon(Icons.add),
-          label: const Text('Create Code'),
-          backgroundColor: Colors.orange,
-          foregroundColor: Colors.white,
-        );
-      case 4:
-        return FloatingActionButton.extended(
-          onPressed: () => _showAddBarangaySheet(context),
-          icon: const Icon(Icons.add),
-          label: const Text('Add Barangay'),
           backgroundColor: Colors.teal,
           foregroundColor: Colors.white,
+          child: const Icon(Icons.person_add),
+        );
+      case 3:
+        return FloatingActionButton.small(
+          heroTag: 'code_fab',
+          onPressed: () => _showCreateCodeSheet(context),
+          backgroundColor: Colors.orange,
+          foregroundColor: Colors.white,
+          child: const Icon(Icons.add_card),
+        );
+      case 4:
+        return FloatingActionButton.small(
+          heroTag: 'barangay_fab',
+          onPressed: () => _showAddBarangaySheet(context),
+          backgroundColor: Colors.teal,
+          foregroundColor: Colors.white,
+          child: const Icon(Icons.location_city),
         );
       case 5:
-        return FloatingActionButton.extended(
+        return FloatingActionButton.small(
           heroTag: 'incidents_fab',
           onPressed: () => _showBroadcastSheet(context),
-          icon: const Icon(Icons.campaign),
-          label: const Text('Broadcast'),
           backgroundColor: Colors.red,
           foregroundColor: Colors.white,
+          child: const Icon(Icons.campaign),
         );
       case 6:
-        return FloatingActionButton.extended(
+        return FloatingActionButton.small(
           heroTag: 'units_fab',
           onPressed: () => _showAddUnitSheet(context),
-          icon: const Icon(Icons.add),
-          label: const Text('Add Unit'),
           backgroundColor: Colors.indigo,
           foregroundColor: Colors.white,
+          child: const Icon(Icons.local_shipping),
         );
       default:
         return null;
