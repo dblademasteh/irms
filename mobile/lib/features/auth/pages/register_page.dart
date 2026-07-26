@@ -88,7 +88,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildBrandBadge(theme, large: true),
+                      _buildBackButton(context),
                       const Spacer(),
                       _buildFeatureCard(
                         icon: Icons.speed,
@@ -150,7 +150,7 @@ class _RegisterPageState extends State<RegisterPage> {
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
             child: Row(
               children: [
-                _buildBrandBadge(theme, compact: true),
+                _buildBackButton(context),
                 const Spacer(),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -194,99 +194,19 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildBrandBadge(ThemeData theme, {bool large = false, bool compact = false}) {
-    if (compact) {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Image.asset('solana_logo.png', fit: BoxFit.contain),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            'IRMS',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: theme.colorScheme.secondary,
-              letterSpacing: 1,
-            ),
-          ),
-        ],
-      );
-    }
-
-    if (large) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                padding: const EdgeInsets.all(8),
-                child: Image.asset('solana_logo.png', fit: BoxFit.contain),
-              ),
-              const SizedBox(width: 20),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Join IRMS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 32,
-                      letterSpacing: 2,
-                    ),
-                  ),
-                  Text(
-                    'Incident Reporting & Management',
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.7),
-                      fontWeight: FontWeight.w500,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'Become Part of\nthe Response Network',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              fontSize: 28,
-              height: 1.3,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Report incidents. Track responses. Save lives.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.6),
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ],
-      );
-    }
-
-    return const SizedBox.shrink();
+  Widget _buildBackButton(BuildContext context) {
+    return IconButton(
+      onPressed: () => context.go('/profile'),
+      icon: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: const Icon(Icons.arrow_back, color: Colors.white),
+      ),
+    );
   }
 
   Widget _buildFeatureCard({
