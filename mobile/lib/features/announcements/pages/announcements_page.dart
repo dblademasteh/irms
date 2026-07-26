@@ -742,6 +742,17 @@ class _AnnouncementCard extends StatelessWidget {
       case 'system':
         return scheme.secondary;
       case 'safety':
+        return IrmsColors.success;
+      case 'weather':
+        return Colors.lightBlue;
+      case 'traffic':
+        return Colors.orange;
+      case 'earthquake':
+        return Colors.brown;
+      case 'flood':
+        return Colors.blue;
+      case 'tsunami':
+        return Colors.cyan;
       default:
         return scheme.primary;
     }

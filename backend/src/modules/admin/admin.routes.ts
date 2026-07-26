@@ -115,7 +115,14 @@ export async function registerAdminRoutes(app: FastifyInstance) {
   const getBroadcastsHandler = async (req: any) => {
     const role = req.user?.role ?? "reporter";
     const broadcasts = await repo.getBroadcasts();
-    if (role === "admin" || role === "dispatcher") return { broadcasts };
+    if (role === "admin") return { broadcasts };
+    if (role === "dispatcher") {
+      return {
+        broadcasts: broadcasts.filter(
+          (b) => !b.target_role || b.target_role === "all" || b.target_role === "dispatchers"
+        ),
+      };
+    }
     return {
       broadcasts: broadcasts.filter(
         (b) => !b.target_role || b.target_role === "all" || b.target_role === "reporters"

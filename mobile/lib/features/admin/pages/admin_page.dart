@@ -73,8 +73,18 @@ class _AdminPageState extends State<AdminPage> {
           backgroundColor: Colors.teal,
           foregroundColor: Colors.white,
         );
+      case 5:
+        return FloatingActionButton.extended(
+          heroTag: 'incidents_fab',
+          onPressed: () => _showBroadcastSheet(context),
+          icon: const Icon(Icons.campaign),
+          label: const Text('Broadcast'),
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+        );
       case 6:
         return FloatingActionButton.extended(
+          heroTag: 'units_fab',
           onPressed: () => _showAddUnitSheet(context),
           icon: const Icon(Icons.add),
           label: const Text('Add Unit'),

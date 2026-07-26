@@ -28,6 +28,26 @@ void showAnnouncementDetailModal(BuildContext context, Map<String, dynamic> anno
       catColor = IrmsColors.success;
       catIcon = Icons.health_and_safety_outlined;
       break;
+    case 'weather':
+      catColor = Colors.lightBlue;
+      catIcon = Icons.thunderstorm_outlined;
+      break;
+    case 'traffic':
+      catColor = Colors.orange;
+      catIcon = Icons.traffic_outlined;
+      break;
+    case 'earthquake':
+      catColor = Colors.brown;
+      catIcon = Icons.vibration;
+      break;
+    case 'flood':
+      catColor = Colors.blue;
+      catIcon = Icons.water_outlined;
+      break;
+    case 'tsunami':
+      catColor = Colors.cyan;
+      catIcon = Icons.waves;
+      break;
     default:
       catColor = theme.colorScheme.primary;
       catIcon = Icons.campaign_outlined;
