@@ -3,7 +3,7 @@ import { z } from "zod";
 import { config } from "../common/config.js";
 import { errors } from "../common/errors.js";
 import { signAccessToken, signRefreshToken, verifyToken } from "../common/jwt.js";
-import { blacklistToken } from "../common/redis.js";
+import { trackSession, untrackSession, getActiveSessionCount } from "../common/redis.js";
 import { authGuard } from "../common/auth-guard.js";
 import * as repo from "./auth.repo.js";
 import * as inviteRepo from "../contacts/invite-codes.repo.js";
@@ -69,7 +69,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       userId: user.id,
       role: user.role,
     });
-    await blacklistToken(`whitelist:${jti}`, config.jwt.refreshTtl);
+    await trackSession(jti, config.jwt.refreshTtl);
 
     return reply.code(201).send({
       token: access,
@@ -90,7 +90,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       userId: user.id,
       role: user.role,
     });
-    await blacklistToken(`whitelist:${jti}`, config.jwt.refreshTtl);
+    await trackSession(jti, config.jwt.refreshTtl);
 
     const { password_hash, ...safe } = user;
     return reply.send({ token: access, refreshToken: refresh, user: safe });
@@ -108,7 +108,19 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     return reply.send({ token: access, refreshToken });
   });
 
+  app.get("/auth/sessions/count", { preHandler: authGuard() }, async () => {
+    const count = await getActiveSessionCount();
+    return { count };
+  });
+
   app.post("/auth/logout", { preHandler: authGuard() }, async (req, reply) => {
+    const { refreshToken } = req.body as { refreshToken?: string };
+    if (refreshToken) {
+      try {
+        const payload = verifyToken(refreshToken) as { jti?: string };
+        if (payload.jti) await untrackSession(payload.jti);
+      } catch { /* ignore invalid token on logout */ }
+    }
     return reply.send({ ok: true });
   });
 

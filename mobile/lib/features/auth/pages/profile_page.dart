@@ -9,6 +9,7 @@ import '../../../l10n/app_localizations.dart';
 import '../cubit/auth_cubit.dart';
 import '../../../core/theme_cubit.dart';
 import '../../../core/dio_client.dart';
+import '../repo/auth_repo.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -557,11 +558,14 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
   String _deviceName = 'Unknown Device';
   String _loginTime = 'Unknown';
   String _loginDate = 'Unknown';
+  int _connectedUsers = 0;
+  bool _loadingCount = true;
 
   @override
   void initState() {
     super.initState();
     _loadSessionInfo();
+    _loadConnectedCount();
   }
 
   Future<void> _loadSessionInfo() async {
@@ -572,6 +576,16 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
       _loginDate = '${now.day}/${now.month}/${now.year}';
       _loginTime = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     });
+  }
+
+  Future<void> _loadConnectedCount() async {
+    try {
+      final repo = AuthRepo(context.read<DioClient>());
+      final count = await repo.getSessionCount();
+      if (mounted) setState(() { _connectedUsers = count; _loadingCount = false; });
+    } catch (_) {
+      if (mounted) setState(() => _loadingCount = false);
+    }
   }
 
   String _getDeviceType() {
@@ -593,7 +607,81 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
             Text('Active Sessions', style: widget.theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text('Manage your logged-in devices', style: TextStyle(color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.5))),
-            const SizedBox(height: 24),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    widget.theme.colorScheme.primary,
+                    widget.theme.colorScheme.primary.withValues(alpha: 0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Stack(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.people, color: Colors.white, size: 28),
+                      ),
+                      if (!_loadingCount)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: Colors.greenAccent,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: widget.theme.colorScheme.primary, width: 2),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Connected Users', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
+                        const SizedBox(height: 4),
+                        _loadingCount
+                            ? const Text('--', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900))
+                            : Text(
+                                _connectedUsers.toString(),
+                                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900),
+                              ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.circle, color: Colors.greenAccent, size: 8),
+                        const SizedBox(width: 6),
+                        Text(_loadingCount ? '...' : 'Live', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(

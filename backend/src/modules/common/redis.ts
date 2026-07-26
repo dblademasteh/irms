@@ -24,3 +24,16 @@ export async function isBlacklisted(jti: string): Promise<boolean> {
   const v = await redis.get(`bl:${jti}`);
   return v === "1";
 }
+
+export async function trackSession(jti: string, ttlSeconds: number): Promise<void> {
+  await redis.set(`session:${jti}`, "1", "EX", ttlSeconds);
+}
+
+export async function untrackSession(jti: string): Promise<void> {
+  await redis.del(`session:${jti}`);
+}
+
+export async function getActiveSessionCount(): Promise<number> {
+  const keys = await redis.keys("session:*");
+  return keys.length;
+}

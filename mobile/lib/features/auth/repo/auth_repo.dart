@@ -62,6 +62,11 @@ class AuthRepo {
     });
   }
 
+  Future<int> getSessionCount() async {
+    final resp = await _dio.dio.get('/auth/sessions/count');
+    return resp.data['count'] as int;
+  }
+
   Future<void> resetPassword({
     required String email,
     required String newPassword,
