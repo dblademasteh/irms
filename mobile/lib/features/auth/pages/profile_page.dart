@@ -530,7 +530,17 @@ builder: (ctx) => _UnitsSheet(theme: theme),
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => _AppInfoSheet(theme: theme),
+      builder: (ctx) => _AppInfoSheet(theme: theme, onHelpSupportTap: () => _showHelpSupportSheet(ctx)),
+    );
+  }
+
+  void _showHelpSupportSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => _HelpSupportSheet(theme: theme),
     );
   }
 }
@@ -674,7 +684,8 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
 
 class _AppInfoSheet extends StatelessWidget {
   final ThemeData theme;
-  const _AppInfoSheet({required this.theme});
+  final VoidCallback? onHelpSupportTap;
+  const _AppInfoSheet({required this.theme, this.onHelpSupportTap});
 
   @override
   Widget build(BuildContext context) {
@@ -699,7 +710,7 @@ class _AppInfoSheet extends StatelessWidget {
             _InfoRow(icon: Icons.code, label: 'Build', value: '2026.07', theme: theme),
             _InfoRow(icon: Icons.flutter_dash, label: 'Framework', value: 'Flutter', theme: theme),
             const Divider(height: 32),
-            _LinkRow(icon: Icons.help_outline, label: 'Help & Support', onTap: () {}, theme: theme),
+            _LinkRow(icon: Icons.help_outline, label: 'Help & Support', onTap: () => onHelpSupportTap?.call(), theme: theme),
             _LinkRow(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () {}, theme: theme),
             _LinkRow(icon: Icons.description_outlined, label: 'Terms of Service', onTap: () {}, theme: theme),
             const SizedBox(height: 16),
@@ -1538,6 +1549,243 @@ class _DetailRow extends StatelessWidget {
           ),
           Expanded(child: Text(value, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: theme.colorScheme.onSurface))),
         ],
+      ),
+);
+  }
+}
+
+class _HelpSupportSheet extends StatefulWidget {
+  final ThemeData theme;
+  const _HelpSupportSheet({required this.theme});
+
+  @override
+  State<_HelpSupportSheet> createState() => _HelpSupportSheetState();
+}
+
+class _HelpSupportSheetState extends State<_HelpSupportSheet> {
+  int? _expandedIndex;
+
+  final List<_FaqItem> _faqs = [
+    _FaqItem(
+      q: 'How do I report an incident?',
+      a: 'Tap the + button on the home screen, fill in the incident type, location, and description, then submit. You can also attach photos.',
+    ),
+    _FaqItem(
+      q: 'How do I add emergency contacts?',
+      a: 'Go to Profile > Contacts. From there you can add, edit, or remove emergency contacts who will be notified during incidents.',
+    ),
+    _FaqItem(
+      q: 'Can I report anonymously?',
+      a: 'Yes, toggle the "Report Anonymously" option when creating an incident. Your identity will not be shared.',
+    ),
+    _FaqItem(
+      q: 'How does location tracking work?',
+      a: 'Location is used to pinpoint incident reports and dispatch responders. You can enable/disable this in Profile > Location.',
+    ),
+    _FaqItem(
+      q: 'What alert categories can I subscribe to?',
+      a: 'You can subscribe to Weather, Traffic, Earthquake, Flood, Tsunami, and Fire alerts. Manage them in Profile > Notifications.',
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: widget.theme.colorScheme.outline.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(color: widget.theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                      child: Icon(Icons.support_agent, color: widget.theme.colorScheme.primary, size: 24),
+                    ),
+                    const SizedBox(width: 12),
+                    Text('Help & Support', style: widget.theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    _SupportCard(
+                      icon: Icons.email_outlined,
+                      label: 'Contact',
+                      sub: 'Email us',
+                      color: Colors.blue,
+                      onTap: () => _launchEmail(),
+                    ),
+                    const SizedBox(width: 12),
+                    _SupportCard(
+                      icon: Icons.bug_report_outlined,
+                      label: 'Bug',
+                      sub: 'Report issue',
+                      color: Colors.orange,
+                      onTap: () => _launchBugReport(),
+                    ),
+                    const SizedBox(width: 12),
+                    _SupportCard(
+                      icon: Icons.menu_book_outlined,
+                      label: 'Guide',
+                      sub: 'How-to',
+                      color: Colors.teal,
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Frequently Asked Questions', style: widget.theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                    Text('${_faqs.length} questions', style: TextStyle(fontSize: 12, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.4))),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView.separated(
+                    controller: scrollController,
+                    itemCount: _faqs.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final faq = _faqs[index];
+                      final isExpanded = _expandedIndex == index;
+                      return Container(
+                        decoration: BoxDecoration(
+                          color: widget.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isExpanded
+                                ? widget.theme.colorScheme.primary.withValues(alpha: 0.3)
+                                : widget.theme.colorScheme.outline.withValues(alpha: 0.1),
+                          ),
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => setState(() => _expandedIndex = isExpanded ? null : index),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        isExpanded ? Icons.remove_circle_outline : Icons.add_circle_outline,
+                                        size: 18,
+                                        color: widget.theme.colorScheme.primary,
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Expanded(
+                                        child: Text(
+                                          faq.q,
+                                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (isExpanded) ...[
+                                    const SizedBox(height: 12),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 28),
+                                      child: Text(
+                                        faq.a,
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _launchEmail() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Opening email client...')),
+    );
+  }
+
+  void _launchBugReport() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Opening bug report form...')),
+    );
+  }
+}
+
+class _FaqItem {
+  final String q;
+  final String a;
+  _FaqItem({required this.q, required this.a});
+}
+
+class _SupportCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String sub;
+  final Color color;
+  final VoidCallback onTap;
+  const _SupportCard({
+    required this.icon,
+    required this.label,
+    required this.sub,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withValues(alpha: 0.2)),
+            ),
+            child: Column(
+              children: [
+                Icon(icon, color: color, size: 26),
+                const SizedBox(height: 8),
+                Text(label, style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: color)),
+                Text(sub, style: TextStyle(fontSize: 10, color: color.withValues(alpha: 0.7))),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
