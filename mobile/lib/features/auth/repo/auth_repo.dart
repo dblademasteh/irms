@@ -151,4 +151,23 @@ class AuthRepo {
       'user': resp.data['user'] as Map<String, dynamic>,
     };
   }
+
+  Future<void> sendOtp(String phone) async {
+    await _dio.dio.post('/auth/otp/send', data: {'phone': phone});
+  }
+
+  Future<Map<String, dynamic>> verifyOtp({
+    required String phone,
+    required String code,
+  }) async {
+    final resp = await _dio.dio.post('/auth/otp/verify', data: {
+      'phone': phone,
+      'code': code,
+    });
+    return {
+      'token': resp.data['token'] as String,
+      'refreshToken': resp.data['refreshToken'] as String,
+      'user': resp.data['user'] as Map<String, dynamic>,
+    };
+  }
 }

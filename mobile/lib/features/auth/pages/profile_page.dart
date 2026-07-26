@@ -2632,7 +2632,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
     final strength = _getStrength(_newCtrl.text);
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.72,
+      initialChildSize: 0.58,
       minChildSize: 0.5,
       maxChildSize: 0.95,
       expand: false,

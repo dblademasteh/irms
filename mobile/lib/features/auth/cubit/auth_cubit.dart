@@ -35,6 +35,13 @@ class Auth2FaRequired extends AuthState {
   List<Object?> get props => [challengeToken, email];
 }
 
+class AuthOtpSent extends AuthState {
+  final String phone;
+  AuthOtpSent({required this.phone});
+  @override
+  List<Object?> get props => [phone];
+}
+
 class AuthCubit extends Cubit<AuthState> {
   final AuthRepo _authRepo;
   final SecureStorage _storage;
@@ -226,5 +233,33 @@ class AuthCubit extends Cubit<AuthState> {
 
   void cancel2FaChallenge() {
     emit(Unauthenticated());
+  }
+
+  Future<void> sendOtp({required String phone}) async {
+    emit(AuthLoading());
+    try {
+      await _authRepo.sendOtp(phone);
+      emit(AuthOtpSent(phone: phone));
+    } catch (e) {
+      emit(Unauthenticated(error: _extractError(e)));
+    }
+  }
+
+  Future<void> verifyOtp({required String phone, required String code}) async {
+    emit(AuthLoading());
+    try {
+      final result = await _authRepo.verifyOtp(phone: phone, code: code);
+      await _storage.saveTokens(
+        accessToken: result['token'],
+        refreshToken: result['refreshToken'],
+      );
+      await _storage.saveUser(result['user']);
+      authNotifier.value = true;
+      roleNotifier.value = result['user']['role'] ?? 'reporter';
+      _safeConnectSocket();
+      emit(Authenticated(result['user']));
+    } catch (e) {
+      emit(Unauthenticated(error: _extractError(e)));
+    }
   }
 }

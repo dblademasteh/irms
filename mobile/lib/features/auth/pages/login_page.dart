@@ -17,12 +17,18 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _otpCtrl = TextEditingController();
   bool _obscure = true;
+  bool _otpMode = false;
+  bool _otpSent = false;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passCtrl.dispose();
+    _phoneCtrl.dispose();
+    _otpCtrl.dispose();
     super.dispose();
   }
 
@@ -38,6 +44,16 @@ class _LoginPageState extends State<LoginPage> {
       body: BlocConsumer<AuthCubit, AuthState>(
         listener: (ctx, state) {
           if (state is Authenticated) ctx.go('/');
+          if (state is AuthOtpSent) {
+            setState(() { _otpSent = true; });
+            ScaffoldMessenger.of(ctx).showSnackBar(
+              SnackBar(
+                content: Text('OTP sent to ${state.phone}'),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            );
+          }
           if (state is Unauthenticated && state.error != null) {
             ScaffoldMessenger.of(ctx).showSnackBar(
               SnackBar(
@@ -62,6 +78,24 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         Padding(padding: const EdgeInsets.fromLTRB(24, 16, 24, 0), child: Row(children: [Container(decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: IconButton(icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary), onPressed: () => context.read<AuthCubit>().cancel2FaChallenge()),)])),
                         Expanded(child: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(24), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420), child: _TwoFaChallengeWidget(state: state))))),
+                      ],
+                    ),
+                  );
+          }
+          if (_otpSent) {
+            final onBack = () { if (mounted) setState(() { _otpSent = false; _otpCtrl.clear(); }); };
+            return isWide
+                ? Row(
+                    children: [
+                      Expanded(flex: 5, child: Container(color: theme.colorScheme.primary)),
+                      Expanded(flex: 4, child: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(48), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 400), child: _OtpVerifyWidget(phone: _phoneCtrl.text.trim(), onBack: onBack))))),
+                    ],
+                  )
+                : SafeArea(
+                    child: Column(
+                      children: [
+                        Padding(padding: const EdgeInsets.fromLTRB(24, 16, 24, 0), child: Row(children: [Container(decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)), child: IconButton(icon: Icon(Icons.arrow_back, color: theme.colorScheme.primary), onPressed: onBack))])),
+                        Expanded(child: Center(child: SingleChildScrollView(padding: const EdgeInsets.all(24), child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420), child: _OtpVerifyWidget(phone: _phoneCtrl.text.trim(), onBack: onBack))))),
                       ],
                     ),
                   );
@@ -329,49 +363,111 @@ class _LoginPageState extends State<LoginPage> {
               color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
         ],
-        _buildField(
-          controller: _emailCtrl,
-          label: loc.fieldEmail,
-          icon: Icons.email_outlined,
-          keyboardType: TextInputType.emailAddress,
-          validator: (v) => v != null && v.contains('@') ? null : loc.validationInvalidEmail,
-        ),
-        const SizedBox(height: 16),
-        _buildField(
-          controller: _passCtrl,
-          label: loc.fieldPassword,
-          icon: Icons.lock_outline,
-          obscure: _obscure,
-          suffix: IconButton(
-            icon: Icon(
-              _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              size: 20,
-            ),
-            onPressed: () => setState(() => _obscure = !_obscure),
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(12),
           ),
-          validator: (v) => v != null && v.length >= 8 ? null : loc.validationMin8Chars,
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() { _otpMode = false; _otpSent = false; _otpCtrl.clear(); }),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: !_otpMode ? theme.colorScheme.primary : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.lock_outline, size: 16, color: !_otpMode ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                        const SizedBox(width: 6),
+                        Text('Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: !_otpMode ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() { _otpMode = true; }),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _otpMode ? theme.colorScheme.primary : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.sms_outlined, size: 16, color: _otpMode ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                        const SizedBox(width: 6),
+                        Text('One-Time Pin', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _otpMode ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton(
-            onPressed: () => _showForgotPasswordDialog(context),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        const SizedBox(height: 24),
+        if (!_otpMode) ...[
+          _buildField(
+            controller: _emailCtrl,
+            label: loc.fieldEmail,
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            validator: (v) => v != null && v.contains('@') ? null : loc.validationInvalidEmail,
+          ),
+          const SizedBox(height: 16),
+          _buildField(
+            controller: _passCtrl,
+            label: loc.fieldPassword,
+            icon: Icons.lock_outline,
+            obscure: _obscure,
+            suffix: IconButton(
+              icon: Icon(
+                _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                size: 20,
+              ),
+              onPressed: () => setState(() => _obscure = !_obscure),
             ),
-            child: Text(
-              'Forgot Password?',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.primary,
+            validator: (v) => v != null && v.length >= 8 ? null : loc.validationMin8Chars,
+          ),
+          const SizedBox(height: 12),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => _showForgotPasswordDialog(context),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Forgot Password?',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: theme.colorScheme.primary,
+                ),
               ),
             ),
           ),
-        ),
+        ] else ...[
+          _buildField(
+            controller: _phoneCtrl,
+            label: 'Phone Number',
+            icon: Icons.phone_outlined,
+            keyboardType: TextInputType.phone,
+            validator: (v) => v != null && v.length >= 8 ? null : 'Enter a valid phone number',
+          ),
+        ],
         const SizedBox(height: 24),
         if (state is AuthLoading)
           Container(
@@ -397,9 +493,9 @@ class _LoginPageState extends State<LoginPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.login, size: 20),
+                Icon(_otpMode ? Icons.sms_outlined : Icons.login, size: 20),
                 const SizedBox(width: 8),
-                Text(loc.btnSignIn),
+                Text(_otpMode ? 'Send One-Time Pin' : loc.btnSignIn),
               ],
             ),
           ),
@@ -586,7 +682,10 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _submit() {
-    if (_formKey.currentState!.validate()) {
+    if (!_formKey.currentState!.validate()) return;
+    if (_otpMode) {
+      context.read<AuthCubit>().sendOtp(phone: _phoneCtrl.text.trim());
+    } else {
       context.read<AuthCubit>().login(
             email: _emailCtrl.text.trim(),
             password: _passCtrl.text,
@@ -796,6 +895,123 @@ class _TwoFaChallengeWidgetState extends State<_TwoFaChallengeWidget> {
         TextButton(
           onPressed: () => context.read<AuthCubit>().cancel2FaChallenge(),
           child: Text('Cancel and go back', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.4))),
+        ),
+      ],
+    );
+  }
+}
+
+class _OtpVerifyWidget extends StatefulWidget {
+  final String phone;
+  final VoidCallback onBack;
+  const _OtpVerifyWidget({required this.phone, required this.onBack});
+
+  @override
+  State<_OtpVerifyWidget> createState() => _OtpVerifyWidgetState();
+}
+
+class _OtpVerifyWidgetState extends State<_OtpVerifyWidget> {
+  String _code = '';
+  bool _verifying = false;
+  int _resendSeconds = 60;
+
+  @override
+  void initState() {
+    super.initState();
+    _startResendTimer();
+  }
+
+  void _startResendTimer() {
+    Future.doWhile(() async {
+      await Future.delayed(const Duration(seconds: 1));
+      if (!mounted || _resendSeconds <= 0) return false;
+      setState(() => _resendSeconds--);
+      return _resendSeconds > 0;
+    });
+  }
+
+  Future<void> _verify() async {
+    if (_code.length != 6) return;
+    setState(() => _verifying = true);
+    context.read<AuthCubit>().verifyOtp(phone: widget.phone, code: _code);
+  }
+
+  Future<void> _resend() async {
+    setState(() => _resendSeconds = 60);
+    _startResendTimer();
+    context.read<AuthCubit>().sendOtp(phone: widget.phone);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.sms_outlined, color: theme.colorScheme.primary, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('One-Time Pin', style: TextStyle(fontWeight: FontWeight.w800, color: theme.colorScheme.primary)),
+                    const SizedBox(height: 2),
+                    Text('Sent to ${widget.phone}', style: TextStyle(fontSize: 12, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text('Enter the 6-digit code', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        Text('Check your phone for the verification code', style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+        const SizedBox(height: 24),
+        TextField(
+          onChanged: (v) => setState(() => _code = v.replaceAll(RegExp(r'\D'), '')),
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 12),
+          decoration: InputDecoration(
+            hintText: '000000',
+            hintStyle: TextStyle(color: theme.colorScheme.outline.withValues(alpha: 0.3), letterSpacing: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+            counterText: '',
+          ),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: (_code.length == 6 && !_verifying) ? _verify : null,
+            style: FilledButton.styleFrom(minimumSize: const Size(double.infinity, 52)),
+            child: _verifying
+                ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.login, size: 20), SizedBox(width: 8), Text('Verify & Sign In')]),
+          ),
+        ),
+        const SizedBox(height: 16),
+        if (_resendSeconds > 0)
+          Text('Resend code in ${_resendSeconds}s', style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withValues(alpha: 0.4)))
+        else
+          TextButton(
+            onPressed: _resend,
+            child: const Text('Resend Code', style: TextStyle(fontWeight: FontWeight.w700)),
+          ),
+        const SizedBox(height: 12),
+        TextButton(
+          onPressed: widget.onBack,
+          child: Text('Use password instead', style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.4))),
         ),
       ],
     );

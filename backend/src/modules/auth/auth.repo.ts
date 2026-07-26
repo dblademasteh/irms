@@ -135,6 +135,16 @@ export async function get2FaInfo(userId: string): Promise<{ two_factor_enabled: 
   return rows[0] ?? null;
 }
 
+export async function findByPhone(
+  phone: string
+): Promise<(UserRow & { password_hash: string }) | null> {
+  const { rows } = await query<{ password_hash: string } & UserRow>(
+    `SELECT ${USER_COLS}, password_hash FROM users WHERE phone = $1`,
+    [phone]
+  );
+  return rows[0] ?? null;
+}
+
 export async function findDispatchers(): Promise<UserRow[]> {
   const { rows } = await query<UserRow>(
     `SELECT ${USER_COLS} FROM users WHERE role IN ('dispatcher','admin')`

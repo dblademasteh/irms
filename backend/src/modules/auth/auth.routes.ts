@@ -9,6 +9,7 @@ import { authGuard } from "../common/auth-guard.js";
 import * as repo from "./auth.repo.js";
 import * as inviteRepo from "../contacts/invite-codes.repo.js";
 import { generateTotpSecret, verifyTotpCode } from "./two-factor.service.js";
+import { generateOtp, storeOtp, verifyOtp } from "./otp.service.js";
 
 const registerSchema = z.object({
   name: z.string().min(1).max(120),
@@ -270,5 +271,28 @@ export async function registerAuthRoutes(app: FastifyInstance) {
 
   app.post("/auth/sessions/revoke", { preHandler: authGuard() }, async (req, reply) => {
     return reply.send({ ok: true, message: "Session revoked" });
+  });
+
+  app.post("/auth/otp/send", async (req, reply) => {
+    const { phone } = z.object({ phone: z.string().min(1) }).parse(req.body);
+    const user = await repo.findByPhone(phone);
+    if (!user) return reply.send({ ok: true, message: "If an account exists, an OTP has been sent" });
+    const otp = generateOtp();
+    await storeOtp(phone, otp);
+    console.log(`[OTP] ${phone} → ${otp}`);
+    return reply.send({ ok: true, message: "OTP sent successfully" });
+  });
+
+  app.post("/auth/otp/verify", async (req, reply) => {
+    const { phone, code } = z.object({ phone: z.string().min(1), code: z.string().length(6) }).parse(req.body);
+    const ok = await verifyOtp(phone, code);
+    if (!ok) throw errors.unauthorized("Invalid or expired OTP code");
+    const user = await repo.findByPhone(phone);
+    if (!user) throw errors.unauthorized("No account found for this phone number");
+    const access = signAccessToken({ userId: user.id, role: user.role });
+    const { token: refresh, jti } = signRefreshToken({ userId: user.id, role: user.role });
+    await trackSession(jti, config.jwt.refreshTtl, sessionMeta(user.id, jti, req));
+    const { password_hash: _, ...safe } = user;
+    return reply.send({ token: access, refreshToken: refresh, user: safe });
   });
 }
