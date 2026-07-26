@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../cubit/auth_cubit.dart';
+import '../../../core/app_toast.dart';
+import '../../../core/storage.dart';
 import '../../../l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
@@ -20,7 +22,7 @@ class _LoginPageState extends State<LoginPage> {
   final _phoneCtrl = TextEditingController();
   final _otpCtrl = TextEditingController();
   bool _obscure = true;
-  bool _otpMode = false;
+  int _loginMode = 0; // 0=password, 1=otp, 2=pin
   bool _otpSent = false;
 
   @override
@@ -46,22 +48,10 @@ class _LoginPageState extends State<LoginPage> {
           if (state is Authenticated) ctx.go('/');
           if (state is AuthOtpSent) {
             setState(() { _otpSent = true; });
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(
-                content: Text('OTP sent to ${state.phone}'),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            );
+            AppToast.success(ctx, 'OTP sent to ${state.phone}');
           }
           if (state is Unauthenticated && state.error != null) {
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(
-                content: Text(state.error ?? loc.errorLoginFailed),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            );
+            AppToast.error(ctx, state.error ?? loc.errorLoginFailed);
           }
         },
         builder: (ctx, state) {
@@ -373,51 +363,14 @@ class _LoginPageState extends State<LoginPage> {
           ),
           child: Row(
             children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() { _otpMode = false; _otpSent = false; _otpCtrl.clear(); }),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: !_otpMode ? theme.colorScheme.primary : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.lock_outline, size: 16, color: !_otpMode ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                        const SizedBox(width: 6),
-                        Text('Password', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: !_otpMode ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.5))),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() { _otpMode = true; }),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _otpMode ? theme.colorScheme.primary : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.sms_outlined, size: 16, color: _otpMode ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                        const SizedBox(width: 6),
-                        Text('One-Time Pin', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: _otpMode ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.5))),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
+              _loginTab(theme, 0, Icons.lock_outline, 'Password'),
+              _loginTab(theme, 1, Icons.sms_outlined, 'OTP'),
+              _loginTab(theme, 2, Icons.pin_outlined, 'PIN'),
             ],
           ),
         ),
         const SizedBox(height: 24),
-        if (!_otpMode) ...[
+        if (_loginMode == 0) ...[
           _buildField(
             controller: _emailCtrl,
             label: loc.fieldEmail,
@@ -459,6 +412,23 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
+        ] else if (_loginMode == 2) ...[
+          TextField(
+            onChanged: (v) => setState(() => _otpCtrl.text = v.replaceAll(RegExp(r'\D'), '')),
+            keyboardType: TextInputType.number,
+            maxLength: 4,
+            textAlign: TextAlign.center,
+            obscureText: true,
+            obscuringCharacter: '●',
+            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 12),
+            decoration: InputDecoration(
+              hintText: '●●●●',
+              hintStyle: TextStyle(color: theme.colorScheme.outline.withValues(alpha: 0.3), letterSpacing: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              counterText: '',
+              prefixIcon: const Icon(Icons.pin_outlined, size: 20),
+            ),
+          ),
         ] else ...[
           _buildField(
             controller: _phoneCtrl,
@@ -493,9 +463,9 @@ class _LoginPageState extends State<LoginPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(_otpMode ? Icons.sms_outlined : Icons.login, size: 20),
+                Icon(_loginMode == 1 ? Icons.sms_outlined : _loginMode == 2 ? Icons.pin_outlined : Icons.login, size: 20),
                 const SizedBox(width: 8),
-                Text(_otpMode ? 'Send One-Time Pin' : loc.btnSignIn),
+                Text(_loginMode == 1 ? 'Send One-Time Pin' : _loginMode == 2 ? 'Sign In with PIN' : loc.btnSignIn),
               ],
             ),
           ),
@@ -589,6 +559,37 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Widget _loginTab(ThemeData theme, int mode, IconData icon, String label) {
+    final active = _loginMode == mode;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _loginMode = mode;
+            if (mode != 1) { _otpSent = false; }
+            if (mode != 2) { _otpCtrl.clear(); }
+          });
+          if (mode == 2) _prefillEmailForPin();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: active ? theme.colorScheme.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: active ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+              const SizedBox(width: 6),
+              Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: active ? Colors.white : theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildField({
     required TextEditingController controller,
     required String label,
@@ -647,9 +648,7 @@ class _LoginPageState extends State<LoginPage> {
     final enabled = prefs.getBool('biometrics_enabled') ?? true;
     if (!enabled) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Biometric unlock is disabled in Profile Settings')),
-        );
+        AppToast.warning(context, 'Biometric unlock is disabled in Profile Settings');
       }
       return;
     }
@@ -659,9 +658,7 @@ class _LoginPageState extends State<LoginPage> {
       final canAuthenticate = await auth.canCheckBiometrics || await auth.isDeviceSupported();
       if (!canAuthenticate) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Biometric hardware not available on this device')),
-          );
+          AppToast.warning(context, 'Biometric hardware not available on this device');
         }
         return;
       }
@@ -674,17 +671,31 @@ class _LoginPageState extends State<LoginPage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Biometric error: $e')),
-        );
+        AppToast.error(context, 'Biometric error: $e');
       }
     }
   }
 
+  Future<void> _prefillEmailForPin() async {
+    if (_emailCtrl.text.isNotEmpty) return;
+    try {
+      final user = await SecureStorage().getUser();
+      if (user != null && user['email'] != null && mounted) {
+        _emailCtrl.text = user['email'] as String;
+      }
+    } catch (_) {}
+  }
+
   void _submit() {
     if (!_formKey.currentState!.validate()) return;
-    if (_otpMode) {
+    if (_loginMode == 1) {
       context.read<AuthCubit>().sendOtp(phone: _phoneCtrl.text.trim());
+    } else if (_loginMode == 2) {
+      if (_otpCtrl.text.length != 4) {
+        AppToast.warning(context, 'PIN must be 4 digits');
+        return;
+      }
+      context.read<AuthCubit>().loginWithPin(email: _emailCtrl.text.trim(), pin: _otpCtrl.text);
     } else {
       context.read<AuthCubit>().login(
             email: _emailCtrl.text.trim(),
@@ -765,15 +776,11 @@ class _LoginPageState extends State<LoginPage> {
                       final email = emailCtrl.text.trim();
                       final pass = newPassCtrl.text;
                       if (email.isEmpty || !email.contains('@')) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please enter a valid email address.')),
-                        );
+                        AppToast.warning(context, 'Please enter a valid email address.');
                         return;
                       }
                       if (pass.length < 8) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Password must be at least 8 characters.')),
-                        );
+                        AppToast.warning(context, 'Password must be at least 8 characters.');
                         return;
                       }
                       setDialogState(() => loading = true);
@@ -781,22 +788,12 @@ class _LoginPageState extends State<LoginPage> {
                         await context.read<AuthCubit>().resetPassword(email: email, newPassword: pass);
                         if (dialogCtx.mounted) Navigator.pop(dialogCtx);
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(loc.snackbarPasswordChanged),
-                              backgroundColor: theme.colorScheme.primary,
-                            ),
-                          );
+                          AppToast.success(context, loc.snackbarPasswordChanged);
                         }
                       } catch (err) {
                         setDialogState(() => loading = false);
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(err.toString().replaceAll('Exception: ', '')),
-                              backgroundColor: theme.colorScheme.error,
-                            ),
-                          );
+                          AppToast.error(context, err.toString().replaceAll('Exception: ', ''));
                         }
                       }
                     },

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../app/theme.dart';
+import '../../../core/app_toast.dart';
 
 void showAnnouncementDetailModal(BuildContext context, Map<String, dynamic> announcement) {
   final theme = Theme.of(context);
@@ -204,9 +205,7 @@ void showAnnouncementDetailModal(BuildContext context, Map<String, dynamic> anno
                   OutlinedButton.icon(
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: '$title\n\n$message'));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Alert text copied to clipboard!'), duration: Duration(seconds: 2)),
-                      );
+                      AppToast.info(context, 'Alert text copied to clipboard!');
                     },
                     icon: const Icon(Icons.copy, size: 16),
                     label: const Text('Copy Text'),

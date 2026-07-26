@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../app/theme.dart';
+import '../../../core/app_toast.dart';
 import '../cubit/incident_cubit.dart';
 
 class TrackPage extends StatefulWidget {
@@ -55,13 +56,7 @@ class _TrackPageState extends State<TrackPage> {
               BlocConsumer<IncidentCubit, IncidentState>(
                 listener: (ctx, state) {
                   if (state is IncidentError) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(
-                        content: Text(state.message),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    );
+                    AppToast.error(ctx, state.message);
                   }
                 },
                 builder: (ctx, state) {

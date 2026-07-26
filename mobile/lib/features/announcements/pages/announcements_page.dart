@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/app_toast.dart';
 import '../../../core/socket_client.dart';
 import '../../../core/dio_client.dart';
 import '../../../app/router.dart';
@@ -124,9 +125,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
         msgCtrl.text = resp.data['message'] as String;
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to generate: $e'), backgroundColor: isDark ? IrmsColors.errorDark : IrmsColors.error),
-          );
+          AppToast.error(context, 'Failed to generate: $e');
         }
       } finally {
         isGenerating = false;
@@ -265,9 +264,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                   : () async {
                       final msg = msgCtrl.text.trim();
                       if (msg.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please enter an announcement message.')),
-                        );
+                        AppToast.warning(context, 'Please enter an announcement message.');
                         return;
                       }
                       setDialogState(() => isSubmitting = true);
@@ -281,22 +278,12 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                         if (dialogCtx.mounted) Navigator.pop(dialogCtx);
                         _loadBroadcasts();
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Announcement successfully broadcasted!'),
-                              backgroundColor: IrmsColors.success,
-                            ),
-                          );
+                          AppToast.success(context, 'Announcement successfully broadcasted!');
                         }
                       } catch (e) {
                         setDialogState(() => isSubmitting = false);
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Failed to broadcast alert: $e'),
-                              backgroundColor: isDark ? IrmsColors.errorDark : IrmsColors.error,
-                            ),
-                          );
+                          AppToast.error(context, 'Failed to broadcast alert: $e');
                         }
                       }
                     },
@@ -327,13 +314,13 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
           ),
         ],
       ),
-      floatingActionButton: isDispatcher(roleNotifier.value) && !isDesktop
-          ? FloatingActionButton.extended(
+      floatingActionButton: isDispatcher(roleNotifier.value)
+          ? FloatingActionButton.small(
+              heroTag: 'broadcast_fab',
               onPressed: () => _showCreateAnnouncementDialog(context),
-              icon: const Icon(Icons.campaign),
-              label: const Text('Broadcast Alert', style: TextStyle(fontWeight: FontWeight.w700)),
               backgroundColor: theme.colorScheme.error,
               foregroundColor: Colors.white,
+              child: const Icon(Icons.campaign),
             )
           : null,
       body: isDesktop
@@ -463,25 +450,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                 count: tsunamiCount,
                 color: Colors.indigo,
               ),
-              const Spacer(),
-              if (isDispatcher(roleNotifier.value)) ...[
-                const Divider(height: 1),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _showCreateAnnouncementDialog(context),
-                    icon: const Icon(Icons.campaign, size: 18),
-                    label: const Text('Broadcast Alert', style: TextStyle(fontWeight: FontWeight.w700)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.error,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                ),
-              ],
+               const Spacer(),
             ],
           ),
         ),

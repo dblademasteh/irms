@@ -127,6 +127,22 @@ export async function disable2Fa(userId: string): Promise<void> {
   await query(`UPDATE users SET two_factor_enabled = false, two_factor_secret = NULL WHERE id = $1`, [userId]);
 }
 
+export async function savePinHash(userId: string, pinHash: string): Promise<void> {
+  await query(`UPDATE users SET pin_hash = $1 WHERE id = $2`, [pinHash, userId]);
+}
+
+export async function getPinHash(userId: string): Promise<string | null> {
+  const { rows } = await query<{ pin_hash: string | null }>(
+    `SELECT pin_hash FROM users WHERE id = $1`,
+    [userId]
+  );
+  return rows[0]?.pin_hash ?? null;
+}
+
+export async function removePinHash(userId: string): Promise<void> {
+  await query(`UPDATE users SET pin_hash = NULL WHERE id = $1`, [userId]);
+}
+
 export async function get2FaInfo(userId: string): Promise<{ two_factor_enabled: boolean; two_factor_secret: string | null } | null> {
   const { rows } = await query<{ two_factor_enabled: boolean; two_factor_secret: string | null }>(
     `SELECT COALESCE(two_factor_enabled, false) AS two_factor_enabled, two_factor_secret FROM users WHERE id = $1`,

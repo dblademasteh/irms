@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubit/dispatcher_cubit.dart';
+import '../../../core/app_toast.dart';
 import '../../../core/socket_client.dart';
 import '../../../core/dio_client.dart';
 import '../../../app/theme.dart';
@@ -511,13 +512,9 @@ class _DispatcherQueuePageState extends State<DispatcherQueuePage> {
                 severity: severity,
                 note: noteCtrl.text.trim().isEmpty ? null : noteCtrl.text.trim(),
               ).then((_) {
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Incident verified successfully'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.successOn(messenger, 'Incident verified successfully');
               }).catchError((err) {
-                messenger.showSnackBar(
-                  SnackBar(content: Text('Failed to verify incident: $err'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.errorOn(messenger, 'Failed to verify incident: $err');
               });
             },
             style: FilledButton.styleFrom(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
@@ -561,13 +558,9 @@ class _DispatcherQueuePageState extends State<DispatcherQueuePage> {
                 incident['id'],
                 reasonCtrl.text.trim(),
               ).then((_) {
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Incident rejected'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.successOn(messenger, 'Incident rejected');
               }).catchError((err) {
-                messenger.showSnackBar(
-                  SnackBar(content: Text('Failed to reject incident: $err'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.errorOn(messenger, 'Failed to reject incident: $err');
               });
             },
             child: const Text('Reject'),

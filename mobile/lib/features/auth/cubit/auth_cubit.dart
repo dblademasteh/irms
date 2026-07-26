@@ -262,4 +262,22 @@ class AuthCubit extends Cubit<AuthState> {
       emit(Unauthenticated(error: _extractError(e)));
     }
   }
+
+  Future<void> loginWithPin({required String email, required String pin}) async {
+    emit(AuthLoading());
+    try {
+      final result = await _authRepo.loginWithPin(email: email, pin: pin);
+      await _storage.saveTokens(
+        accessToken: result['token'],
+        refreshToken: result['refreshToken'],
+      );
+      await _storage.saveUser(result['user']);
+      authNotifier.value = true;
+      roleNotifier.value = result['user']['role'] ?? 'reporter';
+      _safeConnectSocket();
+      emit(Authenticated(result['user']));
+    } catch (e) {
+      emit(Unauthenticated(error: _extractError(e)));
+    }
+  }
 }

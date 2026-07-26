@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../app/theme.dart';
+import '../../../core/app_toast.dart';
 import '../../../core/dio_client.dart';
 import '../cubit/admin_cubit.dart';
 import 'admin_contacts_view.dart';
@@ -483,13 +484,7 @@ class _AdminPageState extends State<AdminPage> {
                     type: selectedType,
                   );
                   if (csv != null && context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Exported ${csv.split('\n').length - 1} incidents. CSV copied to clipboard.'),
-                        behavior: SnackBarBehavior.floating,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    );
+                    AppToast.success(context, 'Exported ${csv.split('\n').length - 1} incidents. CSV copied to clipboard.');
                     await Clipboard.setData(ClipboardData(text: csv));
                   }
                 },
@@ -1377,9 +1372,7 @@ class _UserCard extends StatelessWidget {
                     tooltip: 'Call User',
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: phone));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Phone number $phone copied to clipboard')),
-                      );
+                      AppToast.info(context, 'Phone number $phone copied to clipboard');
                     },
                   ),
                 ],
@@ -1389,9 +1382,7 @@ class _UserCard extends StatelessWidget {
                   tooltip: 'Email User',
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: email));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Email $email copied to clipboard')),
-                    );
+                    AppToast.info(context, 'Email $email copied to clipboard');
                   },
                 ),
                 // Change Role Quick Action
@@ -1483,12 +1474,7 @@ class _UserCard extends StatelessWidget {
                 onTap: () {
                   Navigator.pop(context);
                   onToggleSuspend();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(isSuspended ? 'User ${user['name']} account re-activated.' : 'User ${user['name']} account suspended.'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  AppToast.success(context, isSuspended ? 'User ${user['name']} account re-activated.' : 'User ${user['name']} account suspended.');
                 },
               ),
             ],
@@ -1540,30 +1526,18 @@ class _UserCard extends StatelessWidget {
             onPressed: () async {
               final newPass = passCtrl.text;
               if (newPass.length < 8) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Password must be at least 8 characters.')),
-                );
+                AppToast.warning(context, 'Password must be at least 8 characters.');
                 return;
               }
               Navigator.pop(dialogCtx);
               try {
                 await context.read<AdminCubit>().resetUserPassword(userId, newPass);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Password successfully reset for $userName'),
-                       backgroundColor: IrmsColors.success,
-                    ),
-                  );
+                  AppToast.success(context, 'Password successfully reset for $userName');
                 }
               } catch (err) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Reset error: $err'),
-                       backgroundColor: IrmsColors.error,
-                    ),
-                  );
+                  AppToast.error(context, 'Reset error: $err');
                 }
               }
             },
@@ -1913,13 +1887,7 @@ class _CodeCard extends StatelessWidget {
                     icon: const Icon(Icons.copy, size: 20),
                     onPressed: () {
                       Clipboard.setData(ClipboardData(text: code['code'] ?? ''));
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Copied: ${code['code']}'),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      );
+                      AppToast.info(context, 'Copied: ${code['code']}');
                     },
                   ),
                 if (!isUsed)
@@ -1994,13 +1962,9 @@ class _CodeCard extends StatelessWidget {
             onPressed: () {
               final messenger = ScaffoldMessenger.of(context);
               context.read<AdminCubit>().deleteInviteCode(code['id']).then((_) {
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Invite code deleted successfully'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.successOn(messenger, 'Invite code deleted successfully');
               }).catchError((err) {
-                messenger.showSnackBar(
-                  SnackBar(content: Text('Failed to delete invite code: $err'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.errorOn(messenger, 'Failed to delete invite code: $err');
               });
               Navigator.pop(ctx);
             },
@@ -2208,9 +2172,7 @@ class _IncidentAdminCard extends StatelessWidget {
                   await context.read<AdminCubit>().sendBroadcast(ctrl.text.trim());
                   if (context.mounted) {
                     Navigator.pop(bCtx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('📢 Emergency broadcast sent successfully!')),
-                    );
+                    AppToast.success(context, 'Emergency broadcast sent successfully!');
                   }
                 }
               },
@@ -2280,9 +2242,7 @@ class _IncidentAdminCard extends StatelessWidget {
                   await context.read<AdminCubit>().sendBroadcast('[NOTIFICATION] ${ctrl.text.trim()}');
                   if (context.mounted) {
                     Navigator.pop(nCtx);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('🔔 Notification dispatched to emergency responders!')),
-                    );
+                    AppToast.success(context, 'Notification dispatched to emergency responders!');
                   }
                 }
               },
@@ -2314,13 +2274,9 @@ class _IncidentAdminCard extends StatelessWidget {
             onPressed: () {
               final messenger = ScaffoldMessenger.of(context);
               context.read<AdminCubit>().deleteIncident(incident['id'].toString()).then((_) {
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Incident deleted successfully'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.successOn(messenger, 'Incident deleted successfully');
               }).catchError((err) {
-                messenger.showSnackBar(
-                  SnackBar(content: Text('Failed to delete incident: $err'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.errorOn(messenger, 'Failed to delete incident: $err');
               });
               Navigator.pop(ctx);
             },
@@ -2434,13 +2390,9 @@ class _BarangayCard extends StatelessWidget {
             onPressed: () {
               final messenger = ScaffoldMessenger.of(context);
               context.read<AdminCubit>().deleteBarangay(barangay['id']).then((_) {
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Barangay deleted successfully'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.successOn(messenger, 'Barangay deleted successfully');
               }).catchError((err) {
-                messenger.showSnackBar(
-                  SnackBar(content: Text('Failed to delete barangay: $err'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.errorOn(messenger, 'Failed to delete barangay: $err');
               });
               Navigator.pop(ctx);
             },
@@ -2497,13 +2449,7 @@ class _BroadcastSheetBodyState extends State<_BroadcastSheetBody> {
       widget.ctrl.text = message;
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to generate: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        AppToast.error(context, 'Failed to generate: $e');
       }
     } finally {
       if (mounted) setState(() => _generating = false);
@@ -2651,13 +2597,7 @@ class _BroadcastSheetBodyState extends State<_BroadcastSheetBody> {
                     } catch (e) {
                       setState(() => _sending = false);
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Failed to send broadcast: $e'),
-                            backgroundColor: theme.colorScheme.error,
-                            behavior: SnackBarBehavior.floating,
-                          ),
-                        );
+                        AppToast.error(context, 'Failed to send broadcast: $e');
                       }
                     }
                   },

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/app_toast.dart';
 import '../cubit/admin_cubit.dart';
 import '../repo/admin_repo.dart';
 
@@ -98,9 +99,7 @@ class _AdminContactsViewState extends State<AdminContactsView> {
   }
 
   void _importContacts(BuildContext context) async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('CSV/JSON Import is ready for admin panel')),
-    );
+    AppToast.info(context, 'CSV/JSON Import is ready for admin panel');
   }
 
   void _showCategorySheet(BuildContext context, {Map<String, dynamic>? category}) {
@@ -227,13 +226,9 @@ class _AdminContactsViewState extends State<AdminContactsView> {
             onPressed: () {
               final messenger = ScaffoldMessenger.of(context);
               context.read<AdminCubit>().deleteCategory(category['id']).then((_) {
-                messenger.showSnackBar(
-                  const SnackBar(content: Text('Category deleted successfully'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.successOn(messenger, 'Category deleted successfully');
               }).catchError((err) {
-                messenger.showSnackBar(
-                  SnackBar(content: Text('Failed to delete category: $err'), behavior: SnackBarBehavior.floating),
-                );
+                AppToast.errorOn(messenger, 'Failed to delete category: $err');
               });
               Navigator.pop(ctx);
             },

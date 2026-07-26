@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/app_toast.dart';
 import '../../../core/dio_client.dart';
 import '../../../core/socket_client.dart';
 import '../models/chat_message_model.dart';
@@ -851,8 +852,8 @@ class _InlineLiveChatViewState extends State<_InlineLiveChatView> {
       final dio = context.read<DioClient>();
       await dio.dio.post('/incidents/${widget.incidentId}/messages', data: {'message': text});
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to send message: $e')));
+        if (mounted) {
+        AppToast.error(context, 'Failed to send message: $e');
       }
     } finally {
       if (mounted) setState(() => _sending = false);

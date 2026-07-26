@@ -21,6 +21,7 @@ import 'features/admin/repo/admin_repo.dart';
 import 'features/admin/cubit/admin_cubit.dart';
 import 'features/contacts/repo/contacts_repo.dart';
 import 'features/contacts/cubit/contacts_cubit.dart';
+import 'package:irms_mobile/core/idle_timeout_manager.dart';
 import 'l10n/app_localizations.dart';
 
 void main() async {
@@ -91,7 +92,9 @@ void main() async {
             create: (_) => ContactsCubit(contactsRepo)..loadContacts(),
           ),
         ],
-        child: IrmsApp(router: router),
+        child: IdleTimeoutManager(
+          child: IrmsApp(router: router),
+        ),
       ),
     ),
   );

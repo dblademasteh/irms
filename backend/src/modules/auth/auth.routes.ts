@@ -295,4 +295,36 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     const { password_hash: _, ...safe } = user;
     return reply.send({ token: access, refreshToken: refresh, user: safe });
   });
+
+  app.post("/auth/pin/setup", { preHandler: authGuard() }, async (req, reply) => {
+    const { pin } = z.object({ pin: z.string().length(4) }).parse(req.body);
+    const hash = await repo.hashPassword(pin);
+    await repo.savePinHash(req.user!.userId, hash);
+    return reply.send({ ok: true, message: "PIN set successfully" });
+  });
+
+  app.post("/auth/pin/remove", { preHandler: authGuard() }, async (req) => {
+    await repo.removePinHash(req.user!.userId);
+    return { ok: true, message: "PIN removed" };
+  });
+
+  app.get("/auth/pin/status", { preHandler: authGuard() }, async (req) => {
+    const hash = await repo.getPinHash(req.user!.userId);
+    return { enabled: !!hash };
+  });
+
+  app.post("/auth/pin/login", async (req, reply) => {
+    const { email, pin } = z.object({ email: z.string().email(), pin: z.string().length(4) }).parse(req.body);
+    const user = await repo.findByEmail(email);
+    if (!user) throw errors.unauthorized("No account found for this email");
+    const pinHash = await repo.getPinHash(user.id);
+    if (!pinHash) throw errors.badRequest("PIN login is not enabled for this account");
+    const ok = await repo.verifyPassword(pinHash, pin);
+    if (!ok) throw errors.unauthorized("Invalid PIN");
+    const access = signAccessToken({ userId: user.id, role: user.role });
+    const { token: refresh, jti } = signRefreshToken({ userId: user.id, role: user.role });
+    await trackSession(jti, config.jwt.refreshTtl, sessionMeta(user.id, jti, req));
+    const { password_hash: _, ...safe } = user;
+    return reply.send({ token: access, refreshToken: refresh, user: safe });
+  });
 }

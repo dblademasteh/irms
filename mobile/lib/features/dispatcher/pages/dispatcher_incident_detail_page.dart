@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../app/theme.dart';
+import '../../../core/app_toast.dart';
 import '../../../core/map_launcher.dart';
 import '../../../core/dio_client.dart';
 import 'package:intl/intl.dart';
@@ -950,12 +951,7 @@ class _DispatcherIncidentDetailPageState extends State<DispatcherIncidentDetailP
                           await cubit.dispatchUnits(selectedUnits.toList());
                           if (bottomCtx.mounted) Navigator.pop(bottomCtx);
                           if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('${selectedUnits.length} unit(s) dispatched'),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
+                            AppToast.success(context, '${selectedUnits.length} unit(s) dispatched');
                           }
                         },
                         icon: const Icon(Icons.send, size: 18),

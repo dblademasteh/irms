@@ -7,9 +7,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../app/router.dart';
 import '../../../app/theme.dart';
+import '../../../core/app_toast.dart';
 import '../../../features/auth/cubit/auth_cubit.dart';
 import '../cubit/incident_cubit.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class SubmitIncidentPage extends StatefulWidget {
@@ -54,7 +56,15 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
   @override
   void initState() {
     super.initState();
-    _determinePosition();
+    _initLocationAndAuth();
+  }
+
+  Future<void> _initLocationAndAuth() async {
+    final prefs = await SharedPreferences.getInstance();
+    final gpsEnabled = prefs.getBool('setting_gps') ?? true;
+    if (gpsEnabled) {
+      _determinePosition();
+    }
     final authState = context.read<AuthCubit>().state;
     if (authState is Authenticated) {
       _phoneCtrl.text = authState.user['phone']?.toString() ?? '';
@@ -84,9 +94,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please enable GPS Location services on your phone')),
-          );
+          AppToast.warning(context, 'Please enable GPS Location services on your phone');
         }
         return;
       }
@@ -851,9 +859,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
     final typeLabel = _types.firstWhere((t) => t.$1 == _type, orElse: () => _types.first).$3;
     final bool hasLocation = _editablePosition != null;
     if (!hasLocation) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please wait for GPS location or tap the map to set it.')),
-      );
+      AppToast.warning(context, 'Please wait for GPS location or tap the map to set it.');
       return;
     }
     context.read<IncidentCubit>().submitIncident(
@@ -918,7 +924,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
           TextButton.icon(
             onPressed: () {
               Navigator.of(dialogCtx).pop();
-              messenger.showSnackBar(const SnackBar(content: Text('Tracking code copied!')));
+              AppToast.info(context, 'Tracking code copied!');
             },
             icon: const Icon(Icons.copy),
             label: const Text('Copy'),
@@ -963,9 +969,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
     );
     if (!available) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Speech recognition not available on this device')),
-        );
+        AppToast.warning(context, 'Speech recognition not available on this device');
       }
       return;
     }

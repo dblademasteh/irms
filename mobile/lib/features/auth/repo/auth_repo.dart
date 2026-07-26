@@ -85,8 +85,9 @@ class AuthRepo {
 
   Future<Map<String, dynamic>> createInviteCode() async {
     final resp = await _dio.dio.post('/invite-codes', data: {});
+    final codeObj = resp.data['code'] as Map<String, dynamic>;
     return {
-      'code': resp.data['code'] as String,
+      'code': codeObj['code'] as String,
       'shareUrl': resp.data['shareUrl'] as String,
     };
   }
@@ -163,6 +164,34 @@ class AuthRepo {
     final resp = await _dio.dio.post('/auth/otp/verify', data: {
       'phone': phone,
       'code': code,
+    });
+    return {
+      'token': resp.data['token'] as String,
+      'refreshToken': resp.data['refreshToken'] as String,
+      'user': resp.data['user'] as Map<String, dynamic>,
+    };
+  }
+
+  Future<void> setupPin(String pin) async {
+    await _dio.dio.post('/auth/pin/setup', data: {'pin': pin});
+  }
+
+  Future<void> removePin() async {
+    await _dio.dio.post('/auth/pin/remove');
+  }
+
+  Future<bool> getPinStatus() async {
+    final resp = await _dio.dio.get('/auth/pin/status');
+    return resp.data['enabled'] as bool;
+  }
+
+  Future<Map<String, dynamic>> loginWithPin({
+    required String email,
+    required String pin,
+  }) async {
+    final resp = await _dio.dio.post('/auth/pin/login', data: {
+      'email': email,
+      'pin': pin,
     });
     return {
       'token': resp.data['token'] as String,

@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../app/theme.dart';
+import '../../../core/app_toast.dart';
 import '../../../core/locale_cubit.dart';
 import '../../../l10n/app_localizations.dart';
 import '../cubit/auth_cubit.dart';
@@ -47,6 +50,7 @@ class _ProfilePageState extends State<ProfilePage> {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isDismissible: false,
       enableDrag: false,
       isScrollControlled: true,
@@ -104,7 +108,6 @@ class _ProfilePageState extends State<ProfilePage> {
                 return Row(
                   children: [
                     _NotificationBell(),
-                    IconButton(icon: const Icon(Icons.edit), onPressed: () => _startEditing(state.user)),
                   ],
                 );
               }
@@ -221,6 +224,12 @@ _SectionItem(
                           subtitle: 'Face ID, fingerprint',
                           trailing: _BiometricToggle(),
                         ),
+                      _SectionItem(
+                        icon: Icons.pin_outlined,
+                        title: '4-Digit PIN',
+                        subtitle: 'Quick login with PIN',
+                        onTap: () => _showPinSetupSheet(context),
+                      ),
 _SectionItem(
                         icon: Icons.devices_outlined,
                         title: 'Active Sessions',
@@ -382,6 +391,7 @@ _buildSection(
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => SafeArea(
         child: Column(
@@ -425,6 +435,7 @@ void _showAccountDetailsSheet(BuildContext context, Map<String, dynamic> user, T
 
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => StatefulBuilder(
@@ -478,7 +489,7 @@ void _showAccountDetailsSheet(BuildContext context, Map<String, dynamic> user, T
                                       if (ctx.mounted) {
                                         setSheetState(() { isEditing = false; isSaving = false; });
                                         Navigator.pop(ctx);
-                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profile updated')));
+                                        AppToast.success(context, 'Profile updated');
                                       }
                                     } catch (e) {
                                       setSheetState(() => isSaving = false);
@@ -510,10 +521,11 @@ void _showAccountDetailsSheet(BuildContext context, Map<String, dynamic> user, T
     );
   }
 
-void _showNotificationSettingsSheet(BuildContext context) {
+  void _showNotificationSettingsSheet(BuildContext context) {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _NotificationSettingsSheet(theme: theme),
     );
@@ -523,6 +535,7 @@ void _showLocationSettingsSheet(BuildContext context) {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _LocationSettingsSheet(theme: theme),
     );
@@ -532,6 +545,7 @@ void _showUnitsSheet(BuildContext context) {
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
 builder: (ctx) => _UnitsSheet(theme: theme),
     );
@@ -541,6 +555,7 @@ builder: (ctx) => _UnitsSheet(theme: theme),
     final dio = context.read<DioClient>();
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _ActiveSessionsSheet(theme: Theme.of(context), dio: dio),
@@ -552,9 +567,21 @@ builder: (ctx) => _UnitsSheet(theme: theme),
     final authCubit = context.read<AuthCubit>();
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _TwoFactorSetupSheet(theme: Theme.of(context), dio: dio, authCubit: authCubit),
+    );
+  }
+
+  void _showPinSetupSheet(BuildContext context) {
+    final dio = context.read<DioClient>();
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => _PinSetupSheet(theme: Theme.of(context), dio: dio),
     );
   }
 
@@ -562,6 +589,7 @@ builder: (ctx) => _UnitsSheet(theme: theme),
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _AppInfoSheet(
               theme: theme,
@@ -585,6 +613,7 @@ builder: (ctx) => _UnitsSheet(theme: theme),
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _InviteLinkSheet(theme: theme),
@@ -595,6 +624,7 @@ builder: (ctx) => _UnitsSheet(theme: theme),
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _HelpSupportSheet(theme: theme),
@@ -605,6 +635,7 @@ builder: (ctx) => _UnitsSheet(theme: theme),
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _PrivacyPolicySheet(theme: theme),
@@ -615,6 +646,7 @@ builder: (ctx) => _UnitsSheet(theme: theme),
     final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _TermsOfServiceSheet(theme: theme),
@@ -658,10 +690,10 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
       await repo.revokeSession(sessionId);
       if (mounted) {
         setState(() { _sessions.removeWhere((s) => s['id'] == sessionId); });
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Session revoked')));
+        AppToast.success(context, 'Session revoked');
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+      if (mounted) AppToast.error(context, 'Failed: $e');
     }
   }
 
@@ -844,7 +876,7 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
                   }
                   if (mounted) {
                     setState(() => _sessions = _sessions.where((s) => s['current'] == true).toList());
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Other sessions revoked')));
+                    AppToast.success(context, 'Other sessions revoked');
                   }
                 },
                 style: OutlinedButton.styleFrom(
@@ -858,6 +890,205 @@ class _ActiveSessionsSheetState extends State<_ActiveSessionsSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _PinSetupSheet extends StatefulWidget {
+  final ThemeData theme;
+  final DioClient dio;
+  const _PinSetupSheet({required this.theme, required this.dio});
+
+  @override
+  State<_PinSetupSheet> createState() => _PinSetupSheetState();
+}
+
+class _PinSetupSheetState extends State<_PinSetupSheet> {
+  String _pin = '';
+  String _confirm = '';
+  bool _loading = false;
+  bool _pinEnabled = false;
+  bool _checkingStatus = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkStatus();
+  }
+
+  Future<void> _checkStatus() async {
+    try {
+      final repo = AuthRepo(widget.dio);
+      final enabled = await repo.getPinStatus();
+      if (mounted) setState(() { _pinEnabled = enabled; _checkingStatus = false; });
+    } catch (_) {
+      if (mounted) setState(() => _checkingStatus = false);
+    }
+  }
+
+  Future<void> _setup() async {
+    if (_pin.length != 4 || _confirm.length != 4) return;
+    if (_pin != _confirm) return;
+    setState(() => _loading = true);
+    try {
+      final repo = AuthRepo(widget.dio);
+      await repo.setupPin(_pin);
+      if (mounted) {
+        setState(() => _pinEnabled = true);
+        AppToast.success(context, 'PIN set successfully');
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) AppToast.error(context, 'Failed: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _remove() async {
+    setState(() => _loading = true);
+    try {
+      final repo = AuthRepo(widget.dio);
+      await repo.removePin();
+      if (mounted) {
+        setState(() { _pinEnabled = false; _pin = ''; _confirm = ''; });
+        AppToast.success(context, 'PIN removed');
+      }
+    } catch (e) {
+      if (mounted) AppToast.error(context, 'Failed: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.55,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (_, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: widget.theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: _checkingStatus
+                ? const Center(child: CircularProgressIndicator())
+                : Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: widget.theme.colorScheme.outline.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(color: widget.theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                              child: Icon(Icons.pin_outlined, color: widget.theme.colorScheme.primary, size: 24),
+                            ),
+                            const SizedBox(width: 12),
+                            Text('4-Digit PIN', style: widget.theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _pinEnabled ? 'Your PIN is active. You can log in with your email and PIN.' : 'Set a 4-digit PIN for quick login without your password.',
+                          style: TextStyle(color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                        ),
+                        const SizedBox(height: 24),
+                        if (_pinEnabled) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Colors.green, size: 20),
+                                const SizedBox(width: 12),
+                                Text('PIN is active', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.green)),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: _loading ? null : _remove,
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                side: BorderSide(color: widget.theme.colorScheme.error),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: _loading
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                  : Text('Remove PIN', style: TextStyle(color: widget.theme.colorScheme.error, fontWeight: FontWeight.w700)),
+                            ),
+                          ),
+                        ] else ...[
+                          TextField(
+                            onChanged: (v) => setState(() => _pin = v.replaceAll(RegExp(r'\D'), '')),
+                            keyboardType: TextInputType.number,
+                            maxLength: 4,
+                            textAlign: TextAlign.center,
+                            obscureText: true,
+                            obscuringCharacter: '●',
+                            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 12),
+                            decoration: InputDecoration(
+                              labelText: 'Enter 4-digit PIN',
+                              hintText: '●●●●',
+                              hintStyle: TextStyle(color: widget.theme.colorScheme.outline.withValues(alpha: 0.3), letterSpacing: 12),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              counterText: '',
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            onChanged: (v) => setState(() => _confirm = v.replaceAll(RegExp(r'\D'), '')),
+                            keyboardType: TextInputType.number,
+                            maxLength: 4,
+                            textAlign: TextAlign.center,
+                            obscureText: true,
+                            obscuringCharacter: '●',
+                            style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 12),
+                            decoration: InputDecoration(
+                              labelText: 'Confirm PIN',
+                              hintText: '●●●●',
+                              hintStyle: TextStyle(color: widget.theme.colorScheme.outline.withValues(alpha: 0.3), letterSpacing: 12),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              counterText: '',
+                              errorText: _pin.isNotEmpty && _confirm.isNotEmpty && _pin != _confirm ? 'PINs do not match' : null,
+                            ),
+                          ),
+                          const Spacer(),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: (_pin.length == 4 && _confirm.length == 4 && _pin == _confirm && !_loading) ? _setup : null,
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: _loading
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  : const Text('Set PIN', style: TextStyle(fontWeight: FontWeight.w700)),
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+          ),
+        );
+      },
     );
   }
 }
@@ -977,7 +1208,7 @@ class _InviteLinkSheetState extends State<_InviteLinkSheet> {
       await repo.saveInviteCode({'code': _currentCode, 'shareUrl': _currentShareUrl, 'createdAt': DateTime.now().toIso8601String()});
       await _loadHistory();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to generate code: $e')));
+      if (mounted) AppToast.error(context, 'Failed to generate code: $e');
     } finally {
       setState(() => _loading = false);
     }
@@ -985,15 +1216,14 @@ class _InviteLinkSheetState extends State<_InviteLinkSheet> {
 
   void _copyCode() {
     if (_currentCode == null) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Code copied: ${_currentCode!}')));
+    Clipboard.setData(ClipboardData(text: _currentCode!));
+    AppToast.info(context, 'Code copied: ${_currentCode!}');
   }
 
-  Future<void> _shareLink() async {
-    if (_currentShareUrl == null) return;
-    final uri = Uri.parse(_currentShareUrl!);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+  void _shareLink() {
+    if (_currentCode == null) return;
+    final text = 'Join IRMS! Use invite code: $_currentCode';
+    Share.share(text, subject: 'IRMS Invite Code');
   }
 
   @override
@@ -1114,11 +1344,10 @@ class _InviteLinkSheetState extends State<_InviteLinkSheet> {
                                     ),
                                   ),
                                   IconButton(
-                                    onPressed: () async {
-                                      final url = item['shareUrl'] as String?;
-                                      if (url != null) {
-                                        final uri = Uri.parse(url);
-                                        if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                    onPressed: () {
+                                      final code = item['code'] as String?;
+                                      if (code != null) {
+                                        Share.share('Join IRMS! Use invite code: $code', subject: 'IRMS Invite Code');
                                       }
                                     },
                                     icon: const Icon(Icons.share, size: 18),
@@ -1179,7 +1408,7 @@ class _TwoFactorSetupSheetState extends State<_TwoFactorSetupSheet> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to setup 2FA: $e')));
+        AppToast.error(context, 'Failed to setup 2FA: $e');
         Navigator.pop(context);
       }
     } finally {
@@ -1207,11 +1436,11 @@ class _TwoFactorSetupSheetState extends State<_TwoFactorSetupSheet> {
       final repo = AuthRepo(widget.dio);
       await repo.disable2Fa();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('2FA has been disabled')));
+        AppToast.success(context, '2FA has been disabled');
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+      if (mounted) AppToast.error(context, 'Failed: $e');
     }
   }
 
@@ -1451,6 +1680,7 @@ class _NotificationSettingsSheetState extends State<_NotificationSettingsSheet> 
 void _showChangePasswordSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (ctx) => _ChangePasswordSheet(theme: Theme.of(context)),
@@ -1562,7 +1792,7 @@ class _BiometricToggle extends StatelessWidget {
           onChanged: (v) async {
             await prefs.setBool('biometrics_enabled', v);
             if (context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(v ? 'Biometric unlock enabled' : 'Biometric unlock disabled')));
+              AppToast.info(context, v ? 'Biometric unlock enabled' : 'Biometric unlock disabled');
             }
           },
 );
@@ -2300,15 +2530,11 @@ class _HelpSupportSheetState extends State<_HelpSupportSheet> {
   }
 
   void _launchEmail() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening email client...')),
-    );
+    AppToast.info(context, 'Opening email client...');
   }
 
   void _launchBugReport() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Opening bug report form...')),
-    );
+    AppToast.info(context, 'Opening bug report form...');
   }
 }
 
@@ -2815,7 +3041,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
       await context.read<AuthCubit>().changePassword(currentPassword: _currentCtrl.text, newPassword: _newCtrl.text);
       if (mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated successfully'), behavior: SnackBarBehavior.floating));
+        AppToast.success(context, 'Password updated successfully');
       }
     } catch (e) {
       final msg = e.toString().replaceAll('Exception: ', '');

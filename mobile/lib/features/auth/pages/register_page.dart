@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../cubit/auth_cubit.dart';
+import '../../../core/app_toast.dart';
 import '../../../l10n/app_localizations.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -44,13 +45,7 @@ class _RegisterPageState extends State<RegisterPage> {
         listener: (ctx, state) {
           if (state is Authenticated) ctx.go('/');
           if (state is Unauthenticated && state.error != null) {
-            ScaffoldMessenger.of(ctx).showSnackBar(
-              SnackBar(
-                content: Text(state.error ?? loc.errorRegistrationFailed),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-            );
+            AppToast.error(ctx, state.error ?? loc.errorRegistrationFailed);
           }
         },
         builder: (ctx, state) {
