@@ -844,7 +844,10 @@ class _AppInfoSheet extends StatelessWidget {
             Container(
               width: 72, height: 72,
               decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
-              child: Icon(Icons.shield, size: 40, color: theme.colorScheme.primary),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset('solana_logo.png', fit: BoxFit.contain),
+              ),
             ),
             const SizedBox(height: 16),
             Text('IRMS', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
