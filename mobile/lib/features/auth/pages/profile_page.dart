@@ -23,6 +23,7 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController _nameCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _addressCtrl;
+  bool _consentChecked = false;
 
   @override
   void initState() {
@@ -30,6 +31,38 @@ class _ProfilePageState extends State<ProfilePage> {
     _nameCtrl = TextEditingController();
     _phoneCtrl = TextEditingController();
     _addressCtrl = TextEditingController();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkConsentOnMount());
+  }
+
+  Future<void> _checkConsentOnMount() async {
+    if (_consentChecked) return;
+    _consentChecked = true;
+    final authState = context.read<AuthCubit>().state;
+    if (authState is! Authenticated) {
+      final prefs = await SharedPreferences.getInstance();
+      final hasConsented = prefs.getBool('privacy_consent_given') ?? false;
+      if (!hasConsented && mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showConsentGate(context);
+        });
+      }
+    }
+  }
+
+  void _showConsentGate(BuildContext context) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => _ConsentGateSheet(theme: theme, onAccept: () async {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('privacy_consent_given', true);
+        if (mounted) Navigator.pop(ctx);
+      }),
+);
   }
 
   @override
@@ -2132,9 +2165,191 @@ class _PolicySection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-          Text(content, style: TextStyle(fontSize: 12.5, height: 1.6, color: theme.colorScheme.onSurface.withValues(alpha: 0.65))),
+Text(content, style: TextStyle(fontSize: 12.5, height: 1.6, color: theme.colorScheme.onSurface.withValues(alpha: 0.65))),
         ],
       ),
+    );
+  }
+}
+
+class _ConsentGateSheet extends StatefulWidget {
+  final ThemeData theme;
+  final VoidCallback onAccept;
+  const _ConsentGateSheet({required this.theme, required this.onAccept});
+
+  @override
+  State<_ConsentGateSheet> createState() => _ConsentGateSheetState();
+}
+
+class _ConsentGateSheetState extends State<_ConsentGateSheet> {
+  bool _accepted = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.6,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: widget.theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: widget.theme.colorScheme.outline.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(color: widget.theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+                            child: Icon(Icons.privacy_tip, color: widget.theme.colorScheme.primary, size: 24),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Privacy Policy', style: widget.theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                                Text('Data Privacy Act compliance', style: TextStyle(fontSize: 12, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                  children: [
+                    _PolicySection(
+                      theme: widget.theme,
+                      icon: Icons.storage,
+                      title: '1. Information We Collect',
+                      content: 'We collect personal information that you voluntarily provide, including your name, email address, phone number, and location data. Device information such as device type, operating system, and unique identifiers are also collected.',
+                    ),
+                    _PolicySection(
+                      theme: widget.theme,
+                      icon: Icons.widgets,
+                      title: '2. How We Use Your Information',
+                      content: 'Your information is used to provide and maintain the IRMS incident reporting service, notify you of relevant safety alerts, dispatch emergency responders, and improve our platform functionality.',
+                    ),
+                    _PolicySection(
+                      theme: widget.theme,
+                      icon: Icons.share,
+                      title: '3. Data Sharing',
+                      content: 'Personal information may be shared with authorized government agencies, law enforcement, and emergency response units when necessary to respond to reported incidents. We do not sell your personal data.',
+                    ),
+                    _PolicySection(
+                      theme: widget.theme,
+                      icon: Icons.shield,
+                      title: '4. Data Security',
+                      content: 'We implement encryption of data in transit and at rest, access controls, and secure storage with redundant backups. No system is completely secure, and we cannot guarantee absolute security.',
+                    ),
+                    _PolicySection(
+                      theme: widget.theme,
+                      icon: Icons.person,
+                      title: '5. Your Rights',
+                      content: 'You have the right to access, correct, and request deletion of your personal data. You may withdraw consent at any time and lodge a complaint with a data protection authority.',
+                    ),
+                    _PolicySection(
+                      theme: widget.theme,
+                      icon: Icons.timer,
+                      title: '6. Data Retention',
+                      content: 'Account data is retained while your account is active. You may request account deletion, after which your data will be removed within 30 days, except where legal retention obligations apply.',
+                    ),
+                    _PolicySection(
+                      theme: widget.theme,
+                      icon: Icons.contact_mail,
+                      title: '7. Contact',
+                      content: 'For privacy concerns, contact our Data Protection Officer at privacy@irms.local.',
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: widget.theme.colorScheme.primary.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: widget.theme.colorScheme.primary.withValues(alpha: 0.15)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.check_circle, color: widget.theme.colorScheme.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Text('Consent Agreement', style: TextStyle(fontWeight: FontWeight.w800, color: widget.theme.colorScheme.primary)),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'By using IRMS, you acknowledge that you have read, understood, and agree to the collection, use, and processing of your personal information as described above. You consent to the sharing of your information with authorized responders and agencies for incident response and public safety.',
+                            style: TextStyle(fontSize: 13, height: 1.6, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.7)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => setState(() => _accepted = !_accepted),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          backgroundColor: _accepted ? widget.theme.colorScheme.primary : widget.theme.colorScheme.surfaceContainerHighest,
+                          foregroundColor: _accepted ? Colors.white : widget.theme.colorScheme.onSurface,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(_accepted ? Icons.check_circle : Icons.circle_outlined, size: 18),
+                            const SizedBox(width: 8),
+                            Text(_accepted ? 'I Accept & Continue' : 'Accept to Continue'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: _accepted ? widget.onAccept : null,
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      ),
+                      child: const Text('Continue to Profile'),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
