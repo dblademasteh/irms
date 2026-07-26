@@ -33,10 +33,12 @@ export async function createCode(
   expiresAt: string | null
 ): Promise<InviteCodeRow> {
   const { rows } = await query<InviteCodeRow>(
-    `INSERT INTO invite_codes (code, role, created_by, expires_at) VALUES ($1, $2, $3, $4) RETURNING ${SIMPLE_COLS}`,
+    `INSERT INTO invite_codes (code, role, created_by, expires_at) VALUES ($1, $2, $3, $4)
+     RETURNING id, code, role, created_by, used_by, used_at, expires_at, created_at`,
     [code, role, createdBy, expiresAt]
   );
-  return rows[0];
+  const result: InviteCodeRow = { ...rows[0], created_by_name: null, used_by_name: null };
+  return result;
 }
 
 export async function findByCode(code: string): Promise<InviteCodeRow | null> {

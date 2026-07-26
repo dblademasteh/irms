@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/dio_client.dart';
 
 class AuthRepo {
@@ -65,6 +67,34 @@ class AuthRepo {
   Future<int> getSessionCount() async {
     final resp = await _dio.dio.get('/auth/sessions/count');
     return resp.data['count'] as int;
+  }
+
+  Future<Map<String, dynamic>> createInviteCode() async {
+    final resp = await _dio.dio.post('/invite-codes', data: {});
+    return {
+      'code': resp.data['code'] as String,
+      'shareUrl': resp.data['shareUrl'] as String,
+    };
+  }
+
+  Future<List<Map<String, dynamic>>> getMyInviteCodes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+    if (userId == null) return [];
+    final key = 'my_invite_codes_$userId';
+    final raw = prefs.getString(key);
+    if (raw == null) return [];
+    return List<Map<String, dynamic>>.from(jsonDecode(raw) as List);
+  }
+
+  Future<void> saveInviteCode(Map<String, dynamic> code) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+    if (userId == null) return;
+    final key = 'my_invite_codes_$userId';
+    final existing = await getMyInviteCodes();
+    existing.insert(0, code);
+    await prefs.setString(key, jsonEncode(existing));
   }
 
   Future<void> resetPassword({

@@ -162,7 +162,7 @@ _SectionItem(
                         icon: Icons.vpn_key_outlined,
                         title: 'Invites & Codes',
                         subtitle: 'Invite people to join',
-                        onTap: () => context.go('/admin'),
+                        onTap: () => _showInviteLinkSheet(context),
                       ),
                     ],
                   ),
@@ -562,6 +562,16 @@ builder: (ctx) => _UnitsSheet(theme: theme),
     );
   }
 
+  void _showInviteLinkSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => _InviteLinkSheet(theme: theme),
+    );
+  }
+
   void _showHelpSupportSheet(BuildContext context) {
     final theme = Theme.of(context);
     showModalBottomSheet(
@@ -891,6 +901,211 @@ class _AppInfoSheet extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _InviteLinkSheet extends StatefulWidget {
+  final ThemeData theme;
+  const _InviteLinkSheet({required this.theme});
+
+  @override
+  State<_InviteLinkSheet> createState() => _InviteLinkSheetState();
+}
+
+class _InviteLinkSheetState extends State<_InviteLinkSheet> {
+  bool _loading = false;
+  String? _currentCode;
+  String? _currentShareUrl;
+  List<Map<String, dynamic>> _history = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHistory();
+  }
+
+  Future<void> _loadHistory() async {
+    final repo = AuthRepo(context.read<DioClient>());
+    final codes = await repo.getMyInviteCodes();
+    setState(() => _history = codes);
+  }
+
+  Future<void> _generateCode() async {
+    setState(() => _loading = true);
+    try {
+      final repo = AuthRepo(context.read<DioClient>());
+      final result = await repo.createInviteCode();
+      setState(() {
+        _currentCode = result['code'] as String;
+        _currentShareUrl = result['shareUrl'] as String;
+      });
+      await repo.saveInviteCode({'code': _currentCode, 'shareUrl': _currentShareUrl, 'createdAt': DateTime.now().toIso8601String()});
+      await _loadHistory();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to generate code: $e')));
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  void _copyCode() {
+    if (_currentCode == null) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Code copied: ${_currentCode!}')));
+  }
+
+  Future<void> _shareLink() async {
+    if (_currentShareUrl == null) return;
+    final uri = Uri.parse(_currentShareUrl!);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DraggableScrollableSheet(
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      expand: false,
+      builder: (_, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: widget.theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                  child: Column(
+                    children: [
+                      Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: widget.theme.colorScheme.outline.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Icon(Icons.vpn_key_outlined, color: widget.theme.colorScheme.primary),
+                          const SizedBox(width: 12),
+                          Text('Invite & Codes', style: widget.theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Generate invite codes to share with others', style: TextStyle(color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: FilledButton.icon(
+                    onPressed: _loading ? null : _generateCode,
+                    icon: _loading
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.add),
+                    label: Text(_loading ? 'Generating…' : 'Generate Invite Code'),
+                    style: FilledButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
+                  ),
+                ),
+                if (_currentCode != null) ...[
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: widget.theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: widget.theme.colorScheme.primary.withValues(alpha: 0.2)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Your Invite Code', style: TextStyle(fontWeight: FontWeight.w600, color: widget.theme.colorScheme.primary)),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(_currentCode!, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: widget.theme.colorScheme.onSurface)),
+                              ),
+                              IconButton(
+                                onPressed: _copyCode,
+                                icon: const Icon(Icons.copy),
+                                tooltip: 'Copy code',
+                              ),
+                              IconButton(
+                                onPressed: _shareLink,
+                                icon: const Icon(Icons.share),
+                                tooltip: 'Share link',
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(_currentShareUrl ?? '', style: TextStyle(fontSize: 12, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.4)), overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                Expanded(
+                  child: _history.isEmpty
+                      ? Center(child: Text('No codes generated yet', style: TextStyle(color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.4))))
+                      : ListView.builder(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          itemCount: _history.length,
+                          itemBuilder: (ctx, i) {
+                            final item = _history[i];
+                            final createdAt = DateTime.tryParse(item['createdAt'] ?? '');
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: widget.theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.vpn_key_outlined, size: 18, color: widget.theme.colorScheme.primary),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(item['code'] ?? '', style: const TextStyle(fontWeight: FontWeight.w700, letterSpacing: 1)),
+                                        if (createdAt != null) Text(_formatDate(createdAt), style: TextStyle(fontSize: 12, color: widget.theme.colorScheme.onSurface.withValues(alpha: 0.4))),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () async {
+                                      final url = item['shareUrl'] as String?;
+                                      if (url != null) {
+                                        final uri = Uri.parse(url);
+                                        if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                      }
+                                    },
+                                    icon: const Icon(Icons.share, size: 18),
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatDate(DateTime dt) {
+    return '${dt.day}/${dt.month}/${dt.year} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
 }
 

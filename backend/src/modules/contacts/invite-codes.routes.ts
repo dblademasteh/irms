@@ -10,7 +10,7 @@ function generateCode(): string {
 }
 
 const createCodeSchema = z.object({
-  role: z.enum(["dispatcher", "admin"]),
+  role: z.enum(["dispatcher", "admin"]).optional(),
   expires_at: z.string().datetime().nullable().optional(),
 });
 
@@ -20,12 +20,16 @@ export async function registerInviteCodeRoutes(app: FastifyInstance) {
     return { codes };
   });
 
-  app.post("/invite-codes", { preHandler: authGuard(["admin"]) }, async (req, reply) => {
+  app.post("/invite-codes", { preHandler: authGuard() }, async (req, reply) => {
     const body = createCodeSchema.parse(req.body);
     const userId = req.user!.userId;
     const code = generateCode();
-    const created = await repo.createCode(code, body.role, userId, body.expires_at ?? null);
-    return reply.code(201).send({ code: created });
+    const role = (body.role && req.user!.role === "admin") ? body.role : "reporter";
+    const expiresAt = body.expires_at ?? null;
+    const created = await repo.createCode(code, role, userId, expiresAt);
+    const baseUrl = `${req.protocol}://${req.headers.host ?? "irms.local"}`;
+    const shareUrl = `${baseUrl}/register?code=${code}`;
+    return reply.code(201).send({ code: created, shareUrl });
   });
 
   app.delete("/invite-codes/:id", { preHandler: authGuard(["admin"]) }, async (req, reply) => {
