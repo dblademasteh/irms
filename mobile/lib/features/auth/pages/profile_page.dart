@@ -23,7 +23,6 @@ class _ProfilePageState extends State<ProfilePage> {
   late TextEditingController _nameCtrl;
   late TextEditingController _phoneCtrl;
   late TextEditingController _addressCtrl;
-  bool _consentChecked = false;
 
   @override
   void initState() {
@@ -34,18 +33,12 @@ class _ProfilePageState extends State<ProfilePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _checkConsentOnMount());
   }
 
-  Future<void> _checkConsentOnMount() async {
-    if (_consentChecked) return;
-    _consentChecked = true;
+  void _checkConsentOnMount() {
     final authState = context.read<AuthCubit>().state;
-    if (authState is! Authenticated) {
-      final prefs = await SharedPreferences.getInstance();
-      final hasConsented = prefs.getBool('privacy_consent_given') ?? false;
-      if (!hasConsented && mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showConsentGate(context);
-        });
-      }
+    if (authState is! Authenticated && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showConsentGate(context);
+      });
     }
   }
 
@@ -57,12 +50,8 @@ class _ProfilePageState extends State<ProfilePage> {
       enableDrag: false,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => _ConsentGateSheet(theme: theme, onAccept: () async {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('privacy_consent_given', true);
-        if (mounted) Navigator.pop(ctx);
-      }),
-);
+      builder: (ctx) => _ConsentGateSheet(theme: theme, onAccept: () => Navigator.pop(ctx)),
+    );
   }
 
   @override
