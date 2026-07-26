@@ -833,37 +833,63 @@ class _AppInfoSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.colorScheme.outline.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
-            const SizedBox(height: 24),
-            Container(
-              width: 72, height: 72,
-              decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Image.asset('solana_logo.png', fit: BoxFit.contain),
+    return DraggableScrollableSheet(
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (_, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: theme.colorScheme.outline.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(2)))),
+                      const SizedBox(height: 16),
+                      Container(
+                        width: 72, height: 72,
+                        decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(16)),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Image.asset('solana_logo.png', fit: BoxFit.contain),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text('IRMS', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
+                      Text('Incident Reporting & Management System', textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text('IRMS', style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w900)),
-            Text('Incident Reporting & Management System', textAlign: TextAlign.center, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
-            const SizedBox(height: 24),
-            _InfoRow(icon: Icons.tag, label: 'Version', value: '1.0.0', theme: theme),
-            _InfoRow(icon: Icons.code, label: 'Build', value: '2026.07', theme: theme),
-            _InfoRow(icon: Icons.flutter_dash, label: 'Framework', value: 'Flutter', theme: theme),
-            const Divider(height: 32),
-            _LinkRow(icon: Icons.help_outline, label: 'Help & Support', onTap: () => onHelpSupportTap?.call(), theme: theme),
-            _LinkRow(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () => onPrivacyPolicyTap?.call(), theme: theme),
-            _LinkRow(icon: Icons.description_outlined, label: 'Terms of Service', onTap: () => onTermsOfServiceTap?.call(), theme: theme),
-            const SizedBox(height: 16),
-          ],
-        ),
-      ),
+              Expanded(
+                child: ListView(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                  children: [
+                    _InfoRow(icon: Icons.tag, label: 'Version', value: '1.0.0', theme: theme),
+                    _InfoRow(icon: Icons.code, label: 'Build', value: '2026.07', theme: theme),
+                    _InfoRow(icon: Icons.flutter_dash, label: 'Framework', value: 'Flutter', theme: theme),
+                    const Divider(height: 32),
+                    _LinkRow(icon: Icons.help_outline, label: 'Help & Support', onTap: () => onHelpSupportTap?.call(), theme: theme),
+                    _LinkRow(icon: Icons.privacy_tip_outlined, label: 'Privacy Policy', onTap: () => onPrivacyPolicyTap?.call(), theme: theme),
+                    _LinkRow(icon: Icons.description_outlined, label: 'Terms of Service', onTap: () => onTermsOfServiceTap?.call(), theme: theme),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
