@@ -267,6 +267,10 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                         AppToast.warning(context, 'Please enter an announcement message.');
                         return;
                       }
+                      // Capture navigator BEFORE the async gap — after await the
+                      // dialogCtx element may have been deactivated, making .mounted
+                      // unreliable and pop() a no-op.
+                      final nav = Navigator.of(dialogCtx, rootNavigator: true);
                       setDialogState(() => isSubmitting = true);
                       try {
                         final dio = context.read<DioClient>();
@@ -275,7 +279,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                           'category': category,
                           'target_role': targetRole,
                         });
-                        if (dialogCtx.mounted) Navigator.of(dialogCtx, rootNavigator: true).pop();
+                        nav.pop();
                         _loadBroadcasts();
                         if (context.mounted) {
                           AppToast.success(context, 'Announcement successfully broadcasted!');
