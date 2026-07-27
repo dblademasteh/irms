@@ -132,9 +132,12 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
       }
     }
 
+    // Capture the navigator from the page context BEFORE entering the async
+    // dialog builder — this reference stays valid for the lifetime of the page.
+    final pageNav = Navigator.of(context);
+
     showDialog(
       context: context,
-      useRootNavigator: true,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -247,7 +250,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
           ),
           actions: [
             TextButton(
-              onPressed: isSubmitting ? null : () => Navigator.pop(dialogCtx),
+              onPressed: isSubmitting ? null : () => pageNav.pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton.icon(
@@ -267,10 +270,6 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                         AppToast.warning(context, 'Please enter an announcement message.');
                         return;
                       }
-                      // Capture navigator BEFORE the async gap — after await the
-                      // dialogCtx element may have been deactivated, making .mounted
-                      // unreliable and pop() a no-op.
-                      final nav = Navigator.of(dialogCtx, rootNavigator: true);
                       setDialogState(() => isSubmitting = true);
                       try {
                         final dio = context.read<DioClient>();
@@ -279,7 +278,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                           'category': category,
                           'target_role': targetRole,
                         });
-                        nav.pop();
+                        pageNav.pop();
                         _loadBroadcasts();
                         if (context.mounted) {
                           AppToast.success(context, 'Announcement successfully broadcasted!');
@@ -297,6 +296,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
       ),
     );
   }
+
 
   @override
   Widget build(BuildContext context) {
