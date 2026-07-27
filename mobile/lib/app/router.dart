@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../core/socket_client.dart';
 import '../core/notification_service.dart';
@@ -25,6 +26,7 @@ import '../features/admin/pages/admin_page.dart';
 import '../features/announcements/pages/announcements_page.dart';
 
 final authNotifier = ValueNotifier<bool>(false);
+final routerRefreshNotifier = ValueNotifier<bool>(false);
 final roleNotifier = ValueNotifier<String>('reporter');
 final queueFilterNotifier = ValueNotifier<String?>(null);
 
@@ -37,7 +39,7 @@ GoRouter createRouter(bool isAuthenticated) {
   final role = roleNotifier.value;
   return GoRouter(
     initialLocation: isDispatcher(role) ? '/dashboard' : '/',
-    refreshListenable: authNotifier,
+    refreshListenable: routerRefreshNotifier,
     redirect: (context, state) {
       final authenticated = authNotifier.value;
       final currentRole = roleNotifier.value;
@@ -134,6 +136,8 @@ class _ScaffoldWithNav extends StatefulWidget {
 class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
   late SocketClient _socket;
   bool _isOnline = true;
+  Function(dynamic)? _connectHandler;
+  Function(dynamic)? _disconnectHandler;
 
   @override
   void initState() {
@@ -141,16 +145,16 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
     _socket = context.read<SocketClient>();
     _socket.connect();
     _socket.onSystemBroadcast(_onBroadcast);
-    _socket.onConnect(() {
-      if (mounted) setState(() => _isOnline = true);
-    });
-    _socket.onDisconnect(() {
-      if (mounted) setState(() => _isOnline = false);
-    });
+    _connectHandler = (_) { if (mounted) setState(() => _isOnline = true); };
+    _disconnectHandler = (_) { if (mounted) setState(() => _isOnline = false); };
+    _socket.onConnect(_connectHandler!);
+    _socket.onDisconnect(_disconnectHandler!);
   }
 
   @override
   void dispose() {
+    if (_connectHandler != null) _socket.offConnect(_connectHandler!);
+    if (_disconnectHandler != null) _socket.offDisconnect(_disconnectHandler!);
     _socket.offSystemBroadcast(_onBroadcast);
     super.dispose();
   }
@@ -171,51 +175,64 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
     final announcementData = Map<String, dynamic>.from(data is Map ? data : {});
     if (!announcementData.containsKey('title')) announcementData['title'] = 'LIVE BROADCAST ALERT';
 
-    showDialog(
-      context: context,
-      useRootNavigator: true,
-      barrierDismissible: true,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        backgroundColor: Theme.of(context).colorScheme.errorContainer,
-        icon: Icon(Icons.campaign, color: Theme.of(context).colorScheme.error, size: 32),
-        title: Text(
-          'BROADCAST FROM ${author.toUpperCase()}',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-            color: Theme.of(context).colorScheme.error,
-            letterSpacing: 0.8,
-          ),
-        ),
-        content: SingleChildScrollView(
-          child: SelectableText(
-            msg,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              height: 1.5,
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showGeneralDialog(
+        context: context,
+        useRootNavigator: true,
+        barrierDismissible: true,
+        barrierLabel: 'Broadcast',
+        barrierColor: Colors.black54,
+        transitionDuration: const Duration(milliseconds: 250),
+        pageBuilder: (_, __, ___) => const SizedBox.shrink(),
+        transitionBuilder: (ctx, anim, secondaryAnim, child) {
+          final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+          return ScaleTransition(
+            scale: curved,
+            child: AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              backgroundColor: Theme.of(context).colorScheme.errorContainer,
+              icon: Icon(Icons.campaign, color: Theme.of(context).colorScheme.error, size: 32),
+              title: Text(
+                'BROADCAST FROM ${author.toUpperCase()}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  color: Theme.of(context).colorScheme.error,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              content: SingleChildScrollView(
+                child: SelectableText(
+                  msg,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                  child: Text(
+                    'Close',
+                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                  ),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(ctx, rootNavigator: true).pop();
+                    showAnnouncementDetailModal(context, announcementData);
+                  },
+                  child: const Text('View Details'),
+                ),
+              ],
             ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Close',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              showAnnouncementDetailModal(context, announcementData);
-            },
-            child: const Text('View Details'),
-          ),
-        ],
-      ),
-    );
+          );
+        },
+      );
+    });
   }
 
   int _currentIndex(BuildContext context) {

@@ -68,15 +68,19 @@ class AuthCubit extends Cubit<AuthState> {
     } catch (_) {}
   }
 
+  void _updateAuth(bool value, [String role = 'reporter']) {
+    authNotifier.value = value;
+    routerRefreshNotifier.value = value;
+    roleNotifier.value = role;
+  }
+
   void restoreSession(Map<String, dynamic>? user) {
     if (user != null) {
-      authNotifier.value = true;
-      roleNotifier.value = user['role'] ?? 'reporter';
+      _updateAuth(true, user['role'] ?? 'reporter');
       _safeConnectSocket();
       emit(Authenticated(user));
     } else {
-      authNotifier.value = false;
-      roleNotifier.value = 'reporter';
+      _updateAuth(false);
       _socketClient?.disconnect();
       emit(Unauthenticated());
     }
@@ -99,8 +103,7 @@ class AuthCubit extends Cubit<AuthState> {
         refreshToken: result['refreshToken'],
       );
       await _storage.saveUser(result['user']);
-      authNotifier.value = true;
-      roleNotifier.value = result['user']['role'] ?? 'reporter';
+      _updateAuth(true, result['user']['role'] ?? 'reporter');
       _safeConnectSocket();
       emit(Authenticated(result['user']));
     } catch (e) {
@@ -123,8 +126,7 @@ class AuthCubit extends Cubit<AuthState> {
         refreshToken: result['refreshToken'],
       );
       await _storage.saveUser(result['user']);
-      authNotifier.value = true;
-      roleNotifier.value = result['user']['role'] ?? 'reporter';
+      _updateAuth(true, result['user']['role'] ?? 'reporter');
       _safeConnectSocket();
       emit(Authenticated(result['user']));
     } catch (e) {
@@ -136,15 +138,13 @@ class AuthCubit extends Cubit<AuthState> {
     final cachedUser = await _storage.getUser();
     final token = await _storage.getAccessToken();
     if (cachedUser != null && token != null) {
-      authNotifier.value = true;
-      roleNotifier.value = cachedUser['role'] ?? 'reporter';
+      _updateAuth(true, cachedUser['role'] ?? 'reporter');
       _safeConnectSocket();
       emit(Authenticated(cachedUser));
     } else {
       // Fallback guest session when no previous token saved
       final guestUser = {'id': 'biometric-user', 'name': 'Biometric User', 'role': 'reporter'};
-      authNotifier.value = true;
-      roleNotifier.value = 'reporter';
+      _updateAuth(true);
       _safeConnectSocket();
       emit(Authenticated(guestUser));
     }
@@ -173,8 +173,7 @@ class AuthCubit extends Cubit<AuthState> {
         refreshToken: result['refreshToken'],
       );
       await _storage.saveUser(result['user']);
-      authNotifier.value = true;
-      roleNotifier.value = result['user']['role'] ?? 'reporter';
+      _updateAuth(true, result['user']['role'] ?? 'reporter');
       _safeConnectSocket();
       emit(Authenticated(result['user']));
     } catch (e) {
@@ -183,8 +182,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> logout() async {
-    authNotifier.value = false;
-    roleNotifier.value = 'reporter';
+    _updateAuth(false);
     _socketClient?.disconnect();
     emit(Unauthenticated());
   }
@@ -254,8 +252,7 @@ class AuthCubit extends Cubit<AuthState> {
         refreshToken: result['refreshToken'],
       );
       await _storage.saveUser(result['user']);
-      authNotifier.value = true;
-      roleNotifier.value = result['user']['role'] ?? 'reporter';
+      _updateAuth(true, result['user']['role'] ?? 'reporter');
       _safeConnectSocket();
       emit(Authenticated(result['user']));
     } catch (e) {
@@ -263,17 +260,16 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  Future<void> loginWithPin({required String email, required String pin}) async {
+  Future<void> loginWithPin({required String userId, required String pin}) async {
     emit(AuthLoading());
     try {
-      final result = await _authRepo.loginWithPin(email: email, pin: pin);
+      final result = await _authRepo.loginWithPin(userId: userId, pin: pin);
       await _storage.saveTokens(
         accessToken: result['token'],
         refreshToken: result['refreshToken'],
       );
       await _storage.saveUser(result['user']);
-      authNotifier.value = true;
-      roleNotifier.value = result['user']['role'] ?? 'reporter';
+      _updateAuth(true, result['user']['role'] ?? 'reporter');
       _safeConnectSocket();
       emit(Authenticated(result['user']));
     } catch (e) {

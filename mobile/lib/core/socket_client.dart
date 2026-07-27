@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as io;
 import 'storage.dart';
 import 'notifications/notification_helper.dart';
@@ -7,6 +8,7 @@ class SocketClient {
   io.Socket? _socket;
   String _baseUrl;
   final Map<String, Set<Function(dynamic)>> _listeners = {};
+  bool _isConnecting = false;
 
   SocketClient(this._storage, {String baseUrl = 'http://localhost:4000'})
       : _baseUrl = baseUrl;
@@ -15,9 +17,11 @@ class SocketClient {
 
   Future<void> connect() async {
     try {
+      if (_isConnecting || _socket?.connected == true) return;
+      _isConnecting = true;
+
       final token = await _storage.getAccessToken();
-      if (token == null) return;
-      if (_socket?.connected == true) return;
+      if (token == null) { _isConnecting = false; return; }
 
       if (_socket != null) {
         _socket!.disconnect();
@@ -40,15 +44,23 @@ class SocketClient {
       _socket!.onDisconnect((_) => print('[socket] disconnected'));
       _socket!.onError((err) => print('[socket] error: $err'));
 
-      _socket!.on('system:broadcast', (data) {
+      _socket!.on('system:broadcast', (data) async {
         if (data != null && data is Map) {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            if (prefs.getBool('notif_push') == false) return;
+          } catch (_) {}
           final msg = data['message']?.toString() ?? 'New emergency alert';
           AppNotificationService.show('📢 System Broadcast', msg);
         }
       });
 
-      _socket!.on('queue:new_incident', (data) {
+      _socket!.on('queue:new_incident', (data) async {
         if (data != null && data is Map) {
+          try {
+            final prefs = await SharedPreferences.getInstance();
+            if (prefs.getBool('notif_push') == false) return;
+          } catch (_) {}
           final title = data['title']?.toString() ?? 'Emergency Incident';
           final type = data['type']?.toString() ?? 'Report';
           AppNotificationService.show('🚨 New Incident Reported ($type)', title);
@@ -63,7 +75,9 @@ class SocketClient {
       });
 
       _socket!.connect();
+      _isConnecting = false;
     } catch (e) {
+      _isConnecting = false;
       print('[socket] connect error: $e');
     }
   }
@@ -111,12 +125,20 @@ class SocketClient {
   void onIncidentStatus(Function(dynamic) handler) =>
       _on('incident:status', handler);
 
-  void onConnect(Function() handler) {
-    _on('connect', (_) => handler());
+  void onConnect(Function(dynamic) handler) {
+    _on('connect', handler);
   }
 
-  void onDisconnect(Function() handler) {
-    _on('disconnect', (_) => handler());
+  void offConnect(Function(dynamic) handler) {
+    _off('connect', handler);
+  }
+
+  void onDisconnect(Function(dynamic) handler) {
+    _on('disconnect', handler);
+  }
+
+  void offDisconnect(Function(dynamic) handler) {
+    _off('disconnect', handler);
   }
 
   void onSystemBroadcast(Function(dynamic) handler) =>
@@ -133,6 +155,11 @@ class SocketClient {
       _on('incident:new_chat_message', handler);
   void offNewChatMessage(Function(dynamic) handler) =>
       _off('incident:new_chat_message', handler);
+
+  void onNotificationCreated(Function(dynamic) handler) =>
+      _on('notification:created', handler);
+  void offNotificationCreated(Function(dynamic) handler) =>
+      _off('notification:created', handler);
 
   void disconnect() {
     _socket?.disconnect();
