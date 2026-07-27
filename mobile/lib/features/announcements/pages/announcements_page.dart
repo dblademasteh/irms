@@ -52,7 +52,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
         _announcements.clear();
         _announcements.addAll(list.map((b) => {
           'id': b['id'] ?? '',
-          'title': 'BROADCAST ALERT',
+          'title': b['title'] ?? 'Broadcast Alert',
           'message': b['message'] ?? '',
           'author': b['author_name'] ?? 'System',
           'category': b['category'] ?? 'emergency',
@@ -497,7 +497,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                                         crossAxisCount: 2,
                                         mainAxisSpacing: 14,
                                         crossAxisSpacing: 14,
-                                        childAspectRatio: 2.2,
+                                        mainAxisExtent: 190,
                                       ),
                                       itemCount: filteredList.length,
                                       itemBuilder: (ctx, i) => _AnnouncementCard(announcement: filteredList[i]),
@@ -704,29 +704,6 @@ class _AnnouncementCard extends StatelessWidget {
 
   const _AnnouncementCard({required this.announcement});
 
-  Color _getCategoryColor(String cat, ColorScheme scheme) {
-    switch (cat) {
-      case 'emergency':
-        return scheme.error;
-      case 'system':
-        return scheme.secondary;
-      case 'safety':
-        return IrmsColors.success;
-      case 'weather':
-        return Colors.lightBlue;
-      case 'traffic':
-        return Colors.orange;
-      case 'earthquake':
-        return Colors.brown;
-      case 'flood':
-        return Colors.blue;
-      case 'tsunami':
-        return Colors.cyan;
-      default:
-        return scheme.primary;
-    }
-  }
-
   String _formatTimestamp(String? ts) {
     if (ts == null || ts.isEmpty) return '';
     try {
@@ -746,7 +723,7 @@ class _AnnouncementCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isPinned = announcement['isPinned'] == true;
-    final catColor = _getCategoryColor(announcement['category'] ?? '', theme.colorScheme);
+    final catColor = broadcastCategoryColor(announcement['category'] ?? '', theme.colorScheme);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
@@ -767,6 +744,7 @@ class _AnnouncementCard extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
@@ -800,25 +778,27 @@ class _AnnouncementCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
                 announcement['title'] ?? '',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 announcement['message'] ?? '',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                   height: 1.4,
                 ),
-                maxLines: 3,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Icon(Icons.account_circle_outlined, size: 16, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
