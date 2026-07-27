@@ -343,115 +343,44 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
     final floodCount = _announcements.where((a) => a['category'] == 'flood').length;
     final tsunamiCount = _announcements.where((a) => a['category'] == 'tsunami').length;
 
-    return Row(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Left sidebar ──
+        // ── Filter strip (directly below AppBar) ──
         Container(
-          width: 240,
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             border: Border(
-              right: BorderSide(
+              bottom: BorderSide(
                 color: theme.colorScheme.outline.withValues(alpha: 0.1),
               ),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Filters',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _buildSidebarFilterButton(
-                theme,
-                label: 'All Alerts',
-                icon: Icons.campaign_outlined,
-                categoryKey: 'all',
-                count: total,
-                color: theme.colorScheme.primary,
-              ),
-              const SizedBox(height: 6),
-              _buildSidebarFilterButton(
-                theme,
-                label: 'Emergency',
-                icon: Icons.warning_amber_rounded,
-                categoryKey: 'emergency',
-                count: emergencyCount,
-                color: IrmsColors.error,
-              ),
-              const SizedBox(height: 6),
-              _buildSidebarFilterButton(
-                theme,
-                label: 'System',
-                icon: Icons.settings_outlined,
-                categoryKey: 'system',
-                count: systemCount,
-                color: theme.colorScheme.secondary,
-              ),
-              const SizedBox(height: 6),
-              _buildSidebarFilterButton(
-                theme,
-                label: 'Safety Tips',
-                icon: Icons.health_and_safety_outlined,
-                categoryKey: 'safety',
-                count: safetyCount,
-                color: IrmsColors.success,
-              ),
-              const SizedBox(height: 6),
-              _buildSidebarFilterButton(
-                theme,
-                label: 'Traffic',
-                icon: Icons.traffic_outlined,
-                categoryKey: 'traffic',
-                count: trafficCount,
-                color: Colors.orange,
-              ),
-              const SizedBox(height: 6),
-              _buildSidebarFilterButton(
-                theme,
-                label: 'Weather',
-                icon: Icons.cloud_outlined,
-                categoryKey: 'weather',
-                count: weatherCount,
-                color: Colors.blue,
-              ),
-              const SizedBox(height: 6),
-              _buildSidebarFilterButton(
-                theme,
-                label: 'Earthquake',
-                icon: Icons.vibration,
-                categoryKey: 'earthquake',
-                count: earthquakeCount,
-                color: Colors.brown,
-              ),
-              const SizedBox(height: 6),
-              _buildSidebarFilterButton(
-                theme,
-                label: 'Flood',
-                icon: Icons.water_outlined,
-                categoryKey: 'flood',
-                count: floodCount,
-                color: Colors.cyan,
-              ),
-              const SizedBox(height: 6),
-              _buildSidebarFilterButton(
-                theme,
-                label: 'Tsunami',
-                icon: Icons.waves,
-                categoryKey: 'tsunami',
-                count: tsunamiCount,
-                color: Colors.indigo,
-              ),
-               const Spacer(),
-            ],
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildDesktopFilterChip(theme, label: 'All Alerts', icon: Icons.campaign_outlined, categoryKey: 'all', count: total, color: theme.colorScheme.primary),
+                const SizedBox(width: 8),
+                _buildDesktopFilterChip(theme, label: 'Emergency', icon: Icons.warning_amber_rounded, categoryKey: 'emergency', count: emergencyCount, color: IrmsColors.error),
+                const SizedBox(width: 8),
+                _buildDesktopFilterChip(theme, label: 'System', icon: Icons.settings_outlined, categoryKey: 'system', count: systemCount, color: theme.colorScheme.secondary),
+                const SizedBox(width: 8),
+                _buildDesktopFilterChip(theme, label: 'Safety Tips', icon: Icons.health_and_safety_outlined, categoryKey: 'safety', count: safetyCount, color: IrmsColors.success),
+                const SizedBox(width: 8),
+                _buildDesktopFilterChip(theme, label: 'Traffic', icon: Icons.traffic_outlined, categoryKey: 'traffic', count: trafficCount, color: Colors.orange),
+                const SizedBox(width: 8),
+                _buildDesktopFilterChip(theme, label: 'Weather', icon: Icons.cloud_outlined, categoryKey: 'weather', count: weatherCount, color: Colors.blue),
+                const SizedBox(width: 8),
+                _buildDesktopFilterChip(theme, label: 'Earthquake', icon: Icons.vibration, categoryKey: 'earthquake', count: earthquakeCount, color: Colors.brown),
+                const SizedBox(width: 8),
+                _buildDesktopFilterChip(theme, label: 'Flood', icon: Icons.water_outlined, categoryKey: 'flood', count: floodCount, color: Colors.cyan),
+                const SizedBox(width: 8),
+                _buildDesktopFilterChip(theme, label: 'Tsunami', icon: Icons.waves, categoryKey: 'tsunami', count: tsunamiCount, color: Colors.indigo),
+              ],
+            ),
           ),
         ),
 
@@ -466,7 +395,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                       children: [
                         // ── Stat cards ──
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(28, 24, 28, 20),
+                          padding: const EdgeInsets.fromLTRB(28, 20, 28, 16),
                           child: Wrap(
                             spacing: 14,
                             runSpacing: 14,
@@ -494,7 +423,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                                     padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
                                     child: GridView.builder(
                                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                        crossAxisCount: 2,
+                                        crossAxisCount: 3,
                                         mainAxisSpacing: 14,
                                         crossAxisSpacing: 14,
                                         mainAxisExtent: 190,
@@ -593,6 +522,60 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                 decoration: BoxDecoration(
                   color: isSelected ? color.withValues(alpha: 0.15) : theme.colorScheme.outline.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: isSelected ? color : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopFilterChip(ThemeData theme, {required String label, required IconData icon, required String categoryKey, required int count, required Color color}) {
+    final isSelected = _selectedCategory == categoryKey;
+    return Material(
+      color: isSelected ? color.withValues(alpha: 0.12) : Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: () => setState(() => _selectedCategory = categoryKey),
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected ? color.withValues(alpha: 0.4) : theme.colorScheme.outline.withValues(alpha: 0.15),
+              width: isSelected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: isSelected ? color : theme.colorScheme.onSurface.withValues(alpha: 0.45)),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected ? color : theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(
+                  color: isSelected ? color.withValues(alpha: 0.18) : theme.colorScheme.outline.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   count.toString(),
