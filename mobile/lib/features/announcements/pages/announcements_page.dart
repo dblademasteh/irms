@@ -489,56 +489,6 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
     );
   }
 
-  Widget _buildSidebarFilterButton(ThemeData theme, {required String label, required IconData icon, required String categoryKey, required int count, required Color color}) {
-    final isSelected = _selectedCategory == categoryKey;
-    return Material(
-      color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: () => setState(() => _selectedCategory = categoryKey),
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: isSelected ? Border.all(color: color.withValues(alpha: 0.3)) : null,
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: isSelected ? color : theme.colorScheme.onSurface.withValues(alpha: 0.45)),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    fontSize: 13.5,
-                    color: isSelected ? color : theme.colorScheme.onSurface.withValues(alpha: 0.7),
-                  ),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isSelected ? color.withValues(alpha: 0.15) : theme.colorScheme.outline.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  count.toString(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: isSelected ? color : theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildDesktopFilterChip(ThemeData theme, {required String label, required IconData icon, required String categoryKey, required int count, required Color color}) {
     final isSelected = _selectedCategory == categoryKey;
     return Material(
