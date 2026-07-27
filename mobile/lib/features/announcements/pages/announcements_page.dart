@@ -275,7 +275,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                           'category': category,
                           'target_role': targetRole,
                         });
-                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                        if (dialogCtx.mounted) Navigator.of(dialogCtx, rootNavigator: true).pop();
                         _loadBroadcasts();
                         if (context.mounted) {
                           AppToast.success(context, 'Announcement successfully broadcasted!');
