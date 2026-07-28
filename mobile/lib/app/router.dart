@@ -187,47 +187,176 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
         pageBuilder: (_, __, ___) => const SizedBox.shrink(),
         transitionBuilder: (ctx, anim, secondaryAnim, child) {
           final curved = CurvedAnimation(parent: anim, curve: Curves.easeOutCubic);
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+
           return ScaleTransition(
             scale: curved,
-            child: AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
-              icon: Icon(Icons.campaign, color: Theme.of(ctx).colorScheme.error, size: 32),
-              title: Text(
-                'BROADCAST FROM ${author.toUpperCase()}',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  color: Theme.of(ctx).colorScheme.error,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              content: SingleChildScrollView(
-                child: SelectableText(
-                  msg,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                    height: 1.5,
+            child: Dialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 480),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E2E) : Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                  border: Border.all(
+                    color: (isDark ? IrmsColors.errorDark : IrmsColors.error).withValues(alpha: 0.2),
+                    width: 1.5,
                   ),
                 ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Gradient Header
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: isDark
+                              ? [IrmsColors.errorBgDark, const Color(0xFF1E1E2E)]
+                              : [IrmsColors.errorBg, Colors.white],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(26),
+                          topRight: Radius.circular(26),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? IrmsColors.error.withValues(alpha: 0.2)
+                                  : IrmsColors.errorBg,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: isDark ? IrmsColors.errorDark : IrmsColors.error,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.campaign_rounded,
+                              color: isDark ? IrmsColors.errorDark : IrmsColors.error,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'EMERGENCY BROADCAST',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.2,
+                                    color: isDark ? IrmsColors.errorDark : IrmsColors.error,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'FROM: ${author.toUpperCase()}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Body Content
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? const Color(0xFF151521)
+                              : const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isDark ? Colors.white10 : const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        child: SelectableText(
+                          msg,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            height: 1.6,
+                            color: isDark ? Colors.white.withValues(alpha: 0.9) : const Color(0xFF334155),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // Actions Footer
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: isDark ? Colors.white70 : const Color(0xFF64748B),
+                              side: BorderSide(
+                                color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
+                            child: const Text(
+                              'Close',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isDark ? IrmsColors.primaryDark : IrmsColors.primary,
+                              foregroundColor: Colors.white,
+                              elevation: 2,
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.of(ctx, rootNavigator: true).pop();
+                              showAnnouncementDetailModal(ctx, announcementData);
+                            },
+                            child: const Text(
+                              'View Details',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
-                  child: Text(
-                    'Close',
-                    style: TextStyle(color: Theme.of(ctx).colorScheme.error),
-                  ),
-                ),
-                FilledButton(
-                  onPressed: () {
-                    Navigator.of(ctx, rootNavigator: true).pop();
-                    showAnnouncementDetailModal(ctx, announcementData);
-                  },
-                  child: const Text('View Details'),
-                ),
-              ],
             ),
           );
         },
