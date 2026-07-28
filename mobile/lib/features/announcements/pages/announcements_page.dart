@@ -132,10 +132,6 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
       }
     }
 
-    // Capture the navigator from the page context BEFORE entering the async
-    // dialog builder — this reference stays valid for the lifetime of the page.
-    final pageNav = Navigator.of(context);
-
     showDialog(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
@@ -250,7 +246,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
           ),
           actions: [
             TextButton(
-              onPressed: isSubmitting ? null : () => pageNav.pop(),
+              onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
               child: const Text('Cancel'),
             ),
             ElevatedButton.icon(
@@ -278,7 +274,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                           'category': category,
                           'target_role': targetRole,
                         });
-                        pageNav.pop();
+                        Navigator.pop(ctx);
                         _loadBroadcasts();
                         if (context.mounted) {
                           AppToast.success(context, 'Announcement successfully broadcasted!');
