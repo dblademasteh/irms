@@ -1,5 +1,6 @@
 import { query } from "../../db/index.js";
 import * as authRepo from "../auth/auth.repo.js";
+import nodemailer from "nodemailer";
 
 export interface NotificationRow {
   id: string;
@@ -45,8 +46,39 @@ export async function markRead(id: string, userId: string): Promise<void> {
 }
 
 export async function sendEmailNotification(email: string, subject: string, body: string): Promise<void> {
-  // Simulated SMTP / Nodemailer email delivery logger
-  console.log(`[Email Notification] Sent to ${email}: "${subject}" - ${body}`);
+  const host = process.env.SMTP_HOST;
+  const port = process.env.SMTP_PORT;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+  const from = process.env.SMTP_FROM || `"IRMS Alerts" <${user}>`;
+
+  if (host && port && user && pass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host,
+        port: parseInt(port, 10),
+        secure: port === "465",
+        auth: {
+          user,
+          pass,
+        },
+      });
+
+      await transporter.sendMail({
+        from,
+        to: email,
+        subject,
+        text: body,
+      });
+      console.log(`[Email Notification] Real email sent successfully to ${email}`);
+      return;
+    } catch (error) {
+      console.error(`[Email Notification] Failed to send real email to ${email}:`, error);
+    }
+  }
+
+  // Simulated SMTP / Nodemailer email delivery logger (fallback)
+  console.log(`[Email Notification] [SIMULATION] Sent to ${email}: "${subject}" - ${body}`);
 }
 
 export async function sendFcmPushNotification(fcmToken: string, title: string, body: string): Promise<void> {
