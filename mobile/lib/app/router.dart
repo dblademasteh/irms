@@ -191,14 +191,14 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
             scale: curved,
             child: AlertDialog(
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              backgroundColor: Theme.of(context).colorScheme.errorContainer,
-              icon: Icon(Icons.campaign, color: Theme.of(context).colorScheme.error, size: 32),
+              backgroundColor: Theme.of(ctx).colorScheme.errorContainer,
+              icon: Icon(Icons.campaign, color: Theme.of(ctx).colorScheme.error, size: 32),
               title: Text(
                 'BROADCAST FROM ${author.toUpperCase()}',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w900,
-                  color: Theme.of(context).colorScheme.error,
+                  color: Theme.of(ctx).colorScheme.error,
                   letterSpacing: 0.8,
                 ),
               ),
@@ -217,13 +217,13 @@ class _ScaffoldWithNavState extends State<_ScaffoldWithNav> {
                   onPressed: () => Navigator.of(ctx, rootNavigator: true).pop(),
                   child: Text(
                     'Close',
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+                    style: TextStyle(color: Theme.of(ctx).colorScheme.error),
                   ),
                 ),
                 FilledButton(
                   onPressed: () {
                     Navigator.of(ctx, rootNavigator: true).pop();
-                    showAnnouncementDetailModal(context, announcementData);
+                    showAnnouncementDetailModal(ctx, announcementData);
                   },
                   child: const Text('View Details'),
                 ),
