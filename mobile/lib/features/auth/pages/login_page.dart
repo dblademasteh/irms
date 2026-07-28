@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:local_auth/local_auth.dart';
@@ -24,6 +25,26 @@ class _LoginPageState extends State<LoginPage> {
   bool _obscure = true;
   int _loginMode = 0; // 0=password, 1=otp, 2=pin
   bool _otpSent = false;
+  bool _hasStoredEmail = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStoredEmail();
+  }
+
+  Future<void> _loadStoredEmail() async {
+    final stored = await SecureStorage().getUser();
+    if (stored != null && mounted) {
+      final email = stored['email']?.toString();
+      if (email != null && email.isNotEmpty) {
+        setState(() {
+          _emailCtrl.text = email;
+          _hasStoredEmail = true;
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -413,10 +434,21 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ] else if (_loginMode == 2) ...[
+          if (!_hasStoredEmail) ...[
+            _buildField(
+              controller: _emailCtrl,
+              label: 'Email',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              validator: (v) => v != null && v.contains('@') ? null : 'Enter a valid email',
+            ),
+            const SizedBox(height: 16),
+          ],
           TextField(
-            onChanged: (v) => setState(() => _otpCtrl.text = v.replaceAll(RegExp(r'\D'), '')),
+            controller: _otpCtrl,
             keyboardType: TextInputType.number,
             maxLength: 4,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             textAlign: TextAlign.center,
             obscureText: true,
             obscuringCharacter: '●',
@@ -569,7 +601,7 @@ class _LoginPageState extends State<LoginPage> {
             if (mode != 1) { _otpSent = false; }
             if (mode != 2) { _otpCtrl.clear(); }
           });
-          if (mode == 2) _prefillEmailForPin();
+          if (mode == 2) { _otpCtrl.clear(); }
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -676,26 +708,24 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _prefillEmailForPin() async {
-    if (_emailCtrl.text.isNotEmpty) return;
-    try {
-      final user = await SecureStorage().getUser();
-      if (user != null && user['email'] != null && mounted) {
-        _emailCtrl.text = user['email'] as String;
-      }
-    } catch (_) {}
-  }
 
-  void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _submit() async {
+    if (_formKey.currentState != null && !_formKey.currentState!.validate()) return;
     if (_loginMode == 1) {
       context.read<AuthCubit>().sendOtp(phone: _phoneCtrl.text.trim());
     } else if (_loginMode == 2) {
-      if (_otpCtrl.text.length != 4) {
+      final pin = _otpCtrl.text.trim();
+      if (pin.length != 4 || !RegExp(r'^\d{4}$').hasMatch(pin)) {
         AppToast.warning(context, 'PIN must be 4 digits');
         return;
       }
-      context.read<AuthCubit>().loginWithPin(email: _emailCtrl.text.trim(), pin: _otpCtrl.text);
+      final email = _emailCtrl.text.trim();
+      if (email.isEmpty || !email.contains('@')) {
+        AppToast.warning(context, 'Please enter your email');
+        return;
+      }
+      if (!mounted) return;
+      context.read<AuthCubit>().loginWithPin(email: email, pin: pin);
     } else {
       context.read<AuthCubit>().login(
             email: _emailCtrl.text.trim(),
@@ -708,7 +738,9 @@ class _LoginPageState extends State<LoginPage> {
     final theme = Theme.of(context);
     final loc = AppLocalizations.of(context)!;
     final emailCtrl = TextEditingController(text: _emailCtrl.text);
+    final codeCtrl = TextEditingController();
     final newPassCtrl = TextEditingController();
+    int step = 1;
     bool loading = false;
 
     showDialog(
@@ -724,44 +756,66 @@ class _LoginPageState extends State<LoginPage> {
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(Icons.lock_reset, color: theme.colorScheme.primary, size: 20),
+                child: Icon(
+                  step == 1 ? Icons.lock_reset : Icons.mark_email_unread_outlined,
+                  color: theme.colorScheme.primary,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Text(
-                'Reset Password',
+                step == 1 ? 'Reset Password' : 'Verify Code',
                 style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
               ),
             ],
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Enter your registered email and set a new password.',
+                step == 1
+                    ? 'Enter your registered email address to receive a 6-digit password reset code.'
+                    : 'We sent a verification code to ${emailCtrl.text}. Enter the code and your new password below.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  height: 1.4,
                 ),
               ),
               const SizedBox(height: 20),
-              TextField(
-                controller: emailCtrl,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email Address',
-                  prefixIcon: const Icon(Icons.email_outlined, size: 20),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              if (step == 1) ...[
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email Address',
+                    prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: newPassCtrl,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'New Password (min 8 chars)',
-                  prefixIcon: const Icon(Icons.lock_outline, size: 20),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ] else ...[
+                TextField(
+                  controller: codeCtrl,
+                  keyboardType: TextInputType.number,
+                  maxLength: 6,
+                  decoration: InputDecoration(
+                    labelText: '6-digit Verification Code',
+                    prefixIcon: const Icon(Icons.password_outlined, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                    counterText: '',
+                  ),
                 ),
-              ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: newPassCtrl,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: 'New Password (min 8 chars)',
+                    prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+              ],
             ],
           ),
           actions: [
@@ -774,32 +828,62 @@ class _LoginPageState extends State<LoginPage> {
                   ? null
                   : () async {
                       final email = emailCtrl.text.trim();
-                      final pass = newPassCtrl.text;
                       if (email.isEmpty || !email.contains('@')) {
                         AppToast.warning(context, 'Please enter a valid email address.');
                         return;
                       }
-                      if (pass.length < 8) {
-                        AppToast.warning(context, 'Password must be at least 8 characters.');
-                        return;
-                      }
-                      setDialogState(() => loading = true);
-                      try {
-                        await context.read<AuthCubit>().resetPassword(email: email, newPassword: pass);
-                        if (dialogCtx.mounted) Navigator.pop(dialogCtx);
-                        if (context.mounted) {
-                          AppToast.success(context, loc.snackbarPasswordChanged);
+
+                      if (step == 1) {
+                        setDialogState(() => loading = true);
+                        try {
+                          await context.read<AuthCubit>().sendForgotPasswordOtp(email: email);
+                          setDialogState(() {
+                            loading = false;
+                            step = 2;
+                          });
+                          if (context.mounted) {
+                            AppToast.success(context, 'Verification code sent to your email.');
+                          }
+                        } catch (err) {
+                          setDialogState(() => loading = false);
+                          if (context.mounted) {
+                            AppToast.error(context, err.toString().replaceAll('Exception: ', ''));
+                          }
                         }
-                      } catch (err) {
-                        setDialogState(() => loading = false);
-                        if (context.mounted) {
-                          AppToast.error(context, err.toString().replaceAll('Exception: ', ''));
+                      } else {
+                        final code = codeCtrl.text.trim();
+                        final pass = newPassCtrl.text;
+                        if (code.length != 6) {
+                          AppToast.warning(context, 'Please enter the 6-digit verification code.');
+                          return;
+                        }
+                        if (pass.length < 8) {
+                          AppToast.warning(context, 'Password must be at least 8 characters.');
+                          return;
+                        }
+
+                        setDialogState(() => loading = true);
+                        try {
+                          await context.read<AuthCubit>().resetPassword(
+                                email: email,
+                                code: code,
+                                newPassword: pass,
+                              );
+                          if (dialogCtx.mounted) Navigator.pop(dialogCtx);
+                          if (context.mounted) {
+                            AppToast.success(context, loc.snackbarPasswordChanged);
+                          }
+                        } catch (err) {
+                          setDialogState(() => loading = false);
+                          if (context.mounted) {
+                            AppToast.error(context, err.toString().replaceAll('Exception: ', ''));
+                          }
                         }
                       }
                     },
               child: loading
                   ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Reset Password'),
+                  : Text(step == 1 ? 'Send Code' : 'Reset Password'),
             ),
           ],
         ),

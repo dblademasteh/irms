@@ -215,13 +215,25 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
+  Future<void> sendForgotPasswordOtp({
+    required String email,
+  }) async {
+    try {
+      await _authRepo.sendForgotPasswordOtp(email: email);
+    } catch (e) {
+      throw Exception(_extractError(e));
+    }
+  }
+
   Future<void> resetPassword({
     required String email,
+    required String code,
     required String newPassword,
   }) async {
     try {
       await _authRepo.resetPassword(
         email: email,
+        code: code,
         newPassword: newPassword,
       );
     } catch (e) {
@@ -260,10 +272,10 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
-  Future<void> loginWithPin({required String userId, required String pin}) async {
+  Future<void> loginWithPin({required String email, required String pin}) async {
     emit(AuthLoading());
     try {
-      final result = await _authRepo.loginWithPin(userId: userId, pin: pin);
+      final result = await _authRepo.loginWithPin(email: email, pin: pin);
       await _storage.saveTokens(
         accessToken: result['token'],
         refreshToken: result['refreshToken'],

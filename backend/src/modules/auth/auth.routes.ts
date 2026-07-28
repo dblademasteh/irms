@@ -10,6 +10,7 @@ import * as repo from "./auth.repo.js";
 import * as inviteRepo from "../contacts/invite-codes.repo.js";
 import { generateTotpSecret, verifyTotpCode } from "./two-factor.service.js";
 import { generateOtp, storeOtp, verifyOtp } from "./otp.service.js";
+import { sendEmailNotification } from "../notifications/notifications.repo.js";
 
 const registerSchema = z.object({
   name: z.string().min(1).max(120),
@@ -186,14 +187,34 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     return reply.send({ ok: true, message: "Password updated successfully" });
   });
 
+  app.post("/auth/forgot-password", async (req, reply) => {
+    const schema = z.object({
+      email: z.string().email().transform(v => v.toLowerCase().trim()),
+    });
+    const { email } = schema.parse(req.body);
+    const user = await repo.findByEmail(email);
+    if (!user) throw errors.notFound("No account found with this email address");
+
+    const otp = generateOtp();
+    await storeOtp(email, otp);
+
+    await sendEmailNotification(email, "Password Reset OTP", `Your verification code is ${otp}. It will expire in 5 minutes.`);
+
+    return reply.send({ ok: true, message: "Verification code sent to your email." });
+  });
+
   app.post("/auth/reset-password", async (req, reply) => {
     const resetSchema = z.object({
       email: z.string().email().transform(v => v.toLowerCase().trim()),
+      code: z.string().min(1),
       newPassword: z.string().min(8).max(200),
     });
-    const { email, newPassword } = resetSchema.parse(req.body);
+    const { email, code, newPassword } = resetSchema.parse(req.body);
     const user = await repo.findByEmail(email);
     if (!user) throw errors.notFound("No account found with this email address");
+
+    const ok = await verifyOtp(email, code);
+    if (!ok) throw errors.badRequest("Invalid or expired verification code");
 
     const newPasswordHash = await repo.hashPassword(newPassword);
     await repo.updateUserPassword(user.id, newPasswordHash);
@@ -316,7 +337,7 @@ export async function registerAuthRoutes(app: FastifyInstance) {
   app.post("/auth/pin/login", async (req, reply) => {
     const { email, pin } = z.object({ email: z.string().email(), pin: z.string().length(4) }).parse(req.body);
     const user = await repo.findByEmail(email);
-    if (!user) throw errors.unauthorized("No account found for this email");
+    if (!user) throw errors.unauthorized("No account found");
     const pinHash = await repo.getPinHash(user.id);
     if (!pinHash) throw errors.badRequest("PIN login is not enabled for this account");
     const ok = await repo.verifyPassword(pinHash, pin);
@@ -324,7 +345,6 @@ export async function registerAuthRoutes(app: FastifyInstance) {
     const access = signAccessToken({ userId: user.id, role: user.role });
     const { token: refresh, jti } = signRefreshToken({ userId: user.id, role: user.role });
     await trackSession(jti, config.jwt.refreshTtl, sessionMeta(user.id, jti, req));
-    const { password_hash: _, ...safe } = user;
-    return reply.send({ token: access, refreshToken: refresh, user: safe });
+    return reply.send({ token: access, refreshToken: refresh, user });
   });
 }

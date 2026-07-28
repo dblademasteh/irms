@@ -112,12 +112,22 @@ class AuthRepo {
     await prefs.setString(key, jsonEncode(existing));
   }
 
+  Future<void> sendForgotPasswordOtp({
+    required String email,
+  }) async {
+    await _dio.dio.post('/auth/forgot-password', data: {
+      'email': email,
+    });
+  }
+
   Future<void> resetPassword({
     required String email,
+    required String code,
     required String newPassword,
   }) async {
     await _dio.dio.post('/auth/reset-password', data: {
       'email': email,
+      'code': code,
       'newPassword': newPassword,
     });
   }
