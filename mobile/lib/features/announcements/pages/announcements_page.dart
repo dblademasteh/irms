@@ -134,8 +134,11 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
 
     showDialog(
       context: context,
-      builder: (dialogCtx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
+      builder: (dialogCtx) {
+        final navigator = Navigator.of(dialogCtx);
+        final route = ModalRoute.of(dialogCtx);
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) => AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           title: const Row(
             children: [
@@ -246,7 +249,15 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
           ),
           actions: [
             TextButton(
-              onPressed: isSubmitting ? null : () => Navigator.of(dialogCtx).pop(),
+              onPressed: isSubmitting
+                  ? null
+                  : () {
+                      if (route != null) {
+                        navigator.removeRoute(route);
+                      } else {
+                        navigator.pop();
+                      }
+                    },
               child: const Text('Cancel'),
             ),
             ElevatedButton.icon(
@@ -266,7 +277,6 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                         AppToast.warning(context, 'Please enter an announcement message.');
                         return;
                       }
-                      final navigator = Navigator.of(dialogCtx);
                       final dio = context.read<DioClient>();
                       setDialogState(() => isSubmitting = true);
                       try {
@@ -275,7 +285,11 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                           'category': category,
                           'target_role': targetRole,
                         });
-                        navigator.pop();
+                        if (route != null) {
+                          navigator.removeRoute(route);
+                        } else {
+                          navigator.pop();
+                        }
                         _loadBroadcasts();
                         if (context.mounted) {
                           AppToast.success(context, 'Announcement successfully broadcasted!');
@@ -290,9 +304,10 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
+      );
+    },
+  );
+}
 
 
   @override
