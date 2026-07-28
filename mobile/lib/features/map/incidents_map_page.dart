@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
+
 import 'package:latlong2/latlong.dart';
 import '../../../core/dio_client.dart';
 import '../../../core/map_launcher.dart';
@@ -78,6 +78,7 @@ class _IncidentsMapPageState extends State<IncidentsMapPage> {
             userAgentPackageName: 'com.example.irms_mobile',
           ),
           MarkerLayer(
+
             markers: _incidents.map((inc) {
               final lat = (inc['latitude'] as num).toDouble();
               final lng = (inc['longitude'] as num).toDouble();
