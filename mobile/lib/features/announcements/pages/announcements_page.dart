@@ -246,7 +246,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
           ),
           actions: [
             TextButton(
-              onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+              onPressed: isSubmitting ? null : () => Navigator.of(dialogCtx).pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton.icon(
@@ -257,7 +257,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: IrmsColors.error,
                 foregroundColor: Colors.white,
-              ),
+                ),
               onPressed: isSubmitting
                   ? null
                   : () async {
@@ -274,7 +274,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                           'category': category,
                           'target_role': targetRole,
                         });
-                        Navigator.pop(ctx);
+                        Navigator.of(dialogCtx).pop();
                         _loadBroadcasts();
                         if (context.mounted) {
                           AppToast.success(context, 'Announcement successfully broadcasted!');
