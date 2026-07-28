@@ -266,15 +266,16 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                         AppToast.warning(context, 'Please enter an announcement message.');
                         return;
                       }
+                      final navigator = Navigator.of(dialogCtx);
+                      final dio = context.read<DioClient>();
                       setDialogState(() => isSubmitting = true);
                       try {
-                        final dio = context.read<DioClient>();
                         await dio.dio.post('/admin/broadcast', data: {
                           'message': msg,
                           'category': category,
                           'target_role': targetRole,
                         });
-                        Navigator.of(dialogCtx).pop();
+                        navigator.pop();
                         _loadBroadcasts();
                         if (context.mounted) {
                           AppToast.success(context, 'Announcement successfully broadcasted!');
