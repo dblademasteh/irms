@@ -72,3 +72,7 @@ export function emitUnitDispatched(incidentId: string, units: any[]) {
 export function emitNewChatMessage(incidentId: string, chatMessage: any) {
   io?.to(`incident:${incidentId}`).emit("incident:new_chat_message", chatMessage);
 }
+
+export function emitChatToQueue(chatMessage: any) {
+  io?.to("queue").emit("incident:new_chat_message", chatMessage);
+}

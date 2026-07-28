@@ -6,6 +6,7 @@ import * as repo from "./admin.repo.js";
 import { emitBroadcast } from "../realtime/realtime.js";
 import { hashPassword, updateUserPassword } from "../auth/auth.repo.js";
 import { generateAnnouncement, getAvailableTemplates } from "./broadcast-generator.service.js";
+import { fetchNationalAdvisories } from "./advisories.service.js";
 
 const updateRoleSchema = z.object({
   role: z.enum(["reporter", "dispatcher", "admin"]),
@@ -195,4 +196,9 @@ export async function registerAdminRoutes(app: FastifyInstance) {
       return { ok: true, broadcast };
     }
   );
+
+  app.get("/national-advisories", async () => {
+    const advisories = await fetchNationalAdvisories();
+    return { advisories };
+  });
 }

@@ -26,6 +26,7 @@ class _DispatcherQueuePageState extends State<DispatcherQueuePage> {
   final _searchCtrl = TextEditingController();
   bool _showAdvancedFilters = false;
   final Set<String> _selectedIds = {};
+  final Set<String> _trackedIncidents = {};
 
   static const _statuses = ['submitted', 'under_review', 'verified', 'rejected', 'resolved'];
 
@@ -37,6 +38,7 @@ class _DispatcherQueuePageState extends State<DispatcherQueuePage> {
     _socket!.joinQueue();
     _socket!.onQueueNewIncident(_handleSocketUpdate);
     _socket!.onQueueUpdate(_handleSocketUpdate);
+    _socket!.onNewChatMessage(_handleChatMessage);
     _loadBarangays();
     queueFilterNotifier.addListener(_onQueueFilterChanged);
   }
@@ -66,6 +68,37 @@ class _DispatcherQueuePageState extends State<DispatcherQueuePage> {
     }
   }
 
+  void _handleChatMessage(dynamic data) {
+    if (!mounted || data == null || data is! Map<String, dynamic>) return;
+    final incidentId = data['incidentId'] ?? data['incident_id'];
+    final senderName = data['sender_name'] ?? 'Someone';
+    final message = data['message'] ?? '';
+    if (incidentId != null && incidentId is String) {
+      AppToast.info(context, '$senderName: $message');
+    }
+  }
+
+  void _trackActiveIncidents(List<dynamic> incidents) {
+    final activeIds = incidents
+        .where((i) => i['status'] != 'resolved' && i['status'] != 'rejected')
+        .map((i) => i['id'] as String)
+        .toSet();
+
+    for (final id in activeIds) {
+      if (!_trackedIncidents.contains(id)) {
+        _socket?.trackIncident(id);
+        _trackedIncidents.add(id);
+      }
+    }
+
+    for (final id in Set<String>.from(_trackedIncidents)) {
+      if (!activeIds.contains(id)) {
+        _socket?.untrackIncident(id);
+        _trackedIncidents.remove(id);
+      }
+    }
+  }
+
   void _applyFilters() {
     final cubit = context.read<DispatcherCubit>();
     if (_searchQuery.isNotEmpty || _typeFilter != null || _barangayFilter != null) {
@@ -84,6 +117,11 @@ class _DispatcherQueuePageState extends State<DispatcherQueuePage> {
   void dispose() {
     _socket?.offQueueNewIncident(_handleSocketUpdate);
     _socket?.offQueueUpdate(_handleSocketUpdate);
+    _socket?.offNewChatMessage(_handleChatMessage);
+    for (final id in _trackedIncidents) {
+      _socket?.untrackIncident(id);
+    }
+    _trackedIncidents.clear();
     _searchCtrl.dispose();
     queueFilterNotifier.removeListener(_onQueueFilterChanged);
     super.dispose();
@@ -141,6 +179,8 @@ class _DispatcherQueuePageState extends State<DispatcherQueuePage> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               controller: _searchCtrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               onChanged: (v) {
                 setState(() => _searchQuery = v);
                 _applyFilters();
@@ -288,6 +328,7 @@ class _DispatcherQueuePageState extends State<DispatcherQueuePage> {
                   return _buildError(theme, state.message);
                 }
                 final incidents = _currentIncidents(state);
+                _trackActiveIncidents(incidents);
                 if (incidents.isEmpty) {
                   return _buildEmpty(theme);
                 }
@@ -492,6 +533,8 @@ class _DispatcherQueuePageState extends State<DispatcherQueuePage> {
             const SizedBox(height: 16),
             TextField(
               controller: noteCtrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'Dispatcher note (optional)',
                 hintText: 'Add context or instructions...',
@@ -534,6 +577,8 @@ class _DispatcherQueuePageState extends State<DispatcherQueuePage> {
         title: const Text('Reject Incident', style: TextStyle(fontWeight: FontWeight.w800)),
         content: TextField(
           controller: reasonCtrl,
+          autocorrect: false, enableSuggestions: false,
+          autofillHints: const <String>[],
           decoration: InputDecoration(
             labelText: 'Reason',
             hintText: 'Why is this being rejected?',

@@ -24,6 +24,7 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
   final _formKey = GlobalKey<FormState>();
   final _descCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _mapController = MapController();
   String _type = 'fire';
   List<Uint8List> _photoBytesList = [];
   Position? _gpsPosition;
@@ -506,6 +507,8 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
         const SizedBox(height: 10),
         TextField(
           decoration: const InputDecoration(labelText: 'Suspect Description (optional)'),
+          autocorrect: false, enableSuggestions: false,
+          autofillHints: const <String>[],
           onChanged: (v) => _crimeSuspect = v,
         ),
       ],
@@ -599,6 +602,8 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
   Widget _buildDescField(ThemeData theme) {
     return TextField(
       controller: _descCtrl,
+      autocorrect: false, enableSuggestions: false,
+      autofillHints: const <String>[],
       maxLines: 4,
       maxLength: 500,
       decoration: const InputDecoration(
@@ -612,6 +617,8 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
   Widget _buildPhoneField(ThemeData theme) {
     return TextField(
       controller: _phoneCtrl,
+      autocorrect: false, enableSuggestions: false,
+      autofillHints: const <String>[],
       keyboardType: TextInputType.phone,
       decoration: const InputDecoration(
         hintText: 'Enter your phone number',
@@ -664,51 +671,81 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: SizedBox(
-              height: 160,
-              child: FlutterMap(
-                options: MapOptions(
-                  initialCenter: _editablePosition,
-                  initialZoom: 15,
-                  interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.all,
-                  ),
-                  onMapEvent: (event) {
-                    if (event is MapEventTap) {
-                      setState(() => _editablePosition = event.tapPosition);
-                    }
-                  },
-                ),
+              height: 250,
+              child: Stack(
                 children: [
-                  TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.irms_mobile',
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: _editablePosition,
-                        width: 40,
-                        height: 40,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                                blurRadius: 8,
-                                spreadRadius: 2,
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: _editablePosition,
+                      initialZoom: 15,
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.all,
+                      ),
+                      onMapEvent: (event) {
+                        if (event is MapEventTap) {
+                          setState(() => _editablePosition = event.tapPosition);
+                        }
+                      },
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'com.example.irms_mobile',
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: _editablePosition,
+                            width: 40,
+                            height: 40,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                                    blurRadius: 8,
+                                    spreadRadius: 2,
+                                  ),
+                                ],
                               ),
-                            ],
+                              child: const Icon(
+                                Icons.location_on,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.location_on,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
+                        ],
                       ),
                     ],
+                  ),
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: Column(
+                      children: [
+                        _MapControlButton(
+                          icon: Icons.my_location,
+                          tooltip: 'Recenter',
+                          onTap: () {
+                            if (_gpsPosition != null) {
+                              final gpsPos = LatLng(_gpsPosition!.latitude, _gpsPosition!.longitude);
+                              setState(() => _editablePosition = gpsPos);
+                              _mapController.move(gpsPos, _mapController.camera.zoom);
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 4),
+                        _MapControlButton(
+                          icon: Icons.navigation,
+                          tooltip: 'True North',
+                          onTap: () => _mapController.rotate(0),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -982,6 +1019,39 @@ class _SubmitIncidentPageState extends State<SubmitIncidentPage> {
       },
       partialResults: true,
       localeId: 'en-US',
+    );
+  }
+}
+
+class _MapControlButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _MapControlButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surface,
+      shape: const CircleBorder(),
+      elevation: 2,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Tooltip(
+          message: tooltip,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(icon, size: 20, color: theme.colorScheme.onSurface),
+          ),
+        ),
+      ),
     );
   }
 }

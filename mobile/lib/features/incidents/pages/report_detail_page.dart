@@ -18,6 +18,8 @@ class ReportDetailPage extends StatefulWidget {
 }
 
 class _ReportDetailPageState extends State<ReportDetailPage> {
+  final _mapController = MapController();
+
   @override
   void initState() {
     super.initState();
@@ -53,91 +55,96 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
-      appBar: IrmsAppBar(
-        title: 'Report Detail',
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline),
-            tooltip: 'Live Responder Chat & AI Assistant',
-            onPressed: () => showIncidentChatSheet(context, incidentId: widget.incidentId, role: 'citizen'),
+    return BlocBuilder<IncidentCubit, IncidentState>(
+      builder: (ctx, state) {
+        final inc = state is IncidentDetailLoaded ? state.incident : <String, dynamic>{};
+
+        return Scaffold(
+          appBar: IrmsAppBar(
+            title: 'Report Detail',
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.chat_bubble_outline),
+                tooltip: 'Live Responder Chat & AI Assistant',
+                onPressed: () => showIncidentChatSheet(context, incidentId: widget.incidentId, role: 'citizen', incident: inc.isNotEmpty ? inc : null),
+              ),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showIncidentChatSheet(context, incidentId: widget.incidentId, role: 'citizen'),
-        icon: const Icon(Icons.chat_bubble_outline),
-        label: const Text('Live Chat & Assistant'),
-      ),
-      body: BlocBuilder<IncidentCubit, IncidentState>(
-        builder: (ctx, state) {
-          if (state is IncidentError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
-                    const SizedBox(height: 12),
-                    Text('Failed to load report', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: () => context.read<IncidentCubit>().loadDetail(widget.incidentId),
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: () => showIncidentChatSheet(context, incidentId: widget.incidentId, role: 'citizen', incident: inc.isNotEmpty ? inc : null),
+            icon: const Icon(Icons.chat_bubble_outline),
+            label: const Text('Live Chat & Assistant'),
+          ),
+          body: Builder(
+            builder: (ctx) {
+              if (state is IncidentError) {
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(32),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
+                        const SizedBox(height: 12),
+                        Text('Failed to load report', style: theme.textTheme.titleMedium),
+                        const SizedBox(height: 12),
+                        FilledButton.icon(
+                          onPressed: () => context.read<IncidentCubit>().loadDetail(widget.incidentId),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Retry'),
+                        ),
+                      ],
                     ),
+                  ),
+                );
+              }
+              if (state is! IncidentDetailLoaded) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final status = inc['status'] ?? 'submitted';
+              final type = inc['type'] ?? 'fire';
+              final severity = inc['severity'] ?? 'medium';
+              final statusColor = _statusColor(status, theme.brightness == Brightness.dark);
+              final typeColor = _typeColors[type] ?? theme.colorScheme.primary;
+              final typeIcon = _typeIcons[type] ?? Icons.report;
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildStatusHeader(status: status, statusColor: statusColor),
+                    const SizedBox(height: 16),
+                    _buildTypeSeverityBadges(type: type, typeColor: typeColor, typeIcon: typeIcon, severity: severity, isDark: theme.brightness == Brightness.dark),
+                    const SizedBox(height: 16),
+                    _buildTimelineTracker(status: status, createdAt: inc['created_at'], theme: theme),
+                    const SizedBox(height: 16),
+                    _buildMetaCard(incident: inc, theme: theme),
+                    if (status == 'verified' || status == 'resolved') ...[
+                      const SizedBox(height: 14),
+                      _buildResponderDispatchCard(type: type, theme: theme),
+                    ],
+                    if (inc['description'] != null && inc['description'].toString().isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      _buildDescriptionCard(description: inc['description'], theme: theme),
+                    ],
+                    if (inc['media'] != null && (inc['media'] as List).isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      _buildPhotoCard(mediaUrls: List<String>.from(inc['media']), context: context, theme: theme),
+                    ],
+                    if (inc['dispatcher_note'] != null && inc['dispatcher_note'].toString().isNotEmpty) ...[
+                      const SizedBox(height: 14),
+                      _buildDispatcherNoteCard(note: inc['dispatcher_note'], theme: theme),
+                    ],
+                    const SizedBox(height: 32),
                   ],
                 ),
-              ),
-            );
-          }
-          if (state is! IncidentDetailLoaded) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final inc = state.incident;
-          final status = inc['status'] ?? 'submitted';
-          final type = inc['type'] ?? 'fire';
-          final severity = inc['severity'] ?? 'medium';
-          final statusColor = _statusColor(status, theme.brightness == Brightness.dark);
-          final typeColor = _typeColors[type] ?? theme.colorScheme.primary;
-          final typeIcon = _typeIcons[type] ?? Icons.report;
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildStatusHeader(status: status, statusColor: statusColor),
-                const SizedBox(height: 16),
-                _buildTypeSeverityBadges(type: type, typeColor: typeColor, typeIcon: typeIcon, severity: severity, isDark: theme.brightness == Brightness.dark),
-                const SizedBox(height: 16),
-                _buildTimelineTracker(status: status, createdAt: inc['created_at'], theme: theme),
-                const SizedBox(height: 16),
-                _buildMetaCard(incident: inc, theme: theme),
-                if (status == 'verified' || status == 'resolved') ...[
-                  const SizedBox(height: 14),
-                  _buildResponderDispatchCard(type: type, theme: theme),
-                ],
-                if (inc['description'] != null && inc['description'].toString().isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  _buildDescriptionCard(description: inc['description'], theme: theme),
-                ],
-                if (inc['media'] != null && (inc['media'] as List).isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  _buildPhotoCard(mediaUrls: List<String>.from(inc['media']), context: context, theme: theme),
-                ],
-                if (inc['dispatcher_note'] != null && inc['dispatcher_note'].toString().isNotEmpty) ...[
-                  const SizedBox(height: 14),
-                  _buildDispatcherNoteCard(note: inc['dispatcher_note'], theme: theme),
-                ],
-                const SizedBox(height: 32),
-              ],
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -282,45 +289,75 @@ class _ReportDetailPageState extends State<ReportDetailPage> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: SizedBox(
-                  height: 160,
-                  child: FlutterMap(
-                    options: MapOptions(
-                      initialCenter: LatLng(
-                        (incident['latitude'] as num).toDouble(),
-                        (incident['longitude'] as num).toDouble(),
-                      ),
-                      initialZoom: 15,
-                    ),
+                  height: 250,
+                  child: Stack(
                     children: [
-                      TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'com.example.irms_mobile',
-                      ),
-                      MarkerLayer(
-                        markers: [
-                          Marker(
-                            point: LatLng(
-                              (incident['latitude'] as num).toDouble(),
-                              (incident['longitude'] as num).toDouble(),
-                            ),
-                            width: 38,
-                            height: 38,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.primary,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                                    blurRadius: 8,
-                                    spreadRadius: 2,
+                      FlutterMap(
+                        mapController: _mapController,
+                        options: MapOptions(
+                          initialCenter: LatLng(
+                            (incident['latitude'] as num).toDouble(),
+                            (incident['longitude'] as num).toDouble(),
+                          ),
+                          initialZoom: 15,
+                        ),
+                        children: [
+                          TileLayer(
+                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.example.irms_mobile',
+                          ),
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: LatLng(
+                                  (incident['latitude'] as num).toDouble(),
+                                  (incident['longitude'] as num).toDouble(),
+                                ),
+                                width: 38,
+                                height: 38,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                                        blurRadius: 8,
+                                        spreadRadius: 2,
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                  child: const Icon(Icons.location_on, color: Colors.white, size: 22),
+                                ),
                               ),
-                              child: const Icon(Icons.location_on, color: Colors.white, size: 22),
-                            ),
+                            ],
                           ),
                         ],
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Column(
+                          children: [
+                            _MapControlButton(
+                              icon: Icons.my_location,
+                              tooltip: 'Recenter',
+                              onTap: () => _mapController.move(
+                                LatLng(
+                                  (incident['latitude'] as num).toDouble(),
+                                  (incident['longitude'] as num).toDouble(),
+                                ),
+                                _mapController.camera.zoom,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            _MapControlButton(
+                              icon: Icons.navigation,
+                              tooltip: 'True North',
+                              onTap: () => _mapController.rotate(0),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -657,4 +694,37 @@ Color _severityColor(String severity, bool isDark) {
     'critical' => isDark ? IrmsStatusColors.rejected.dark : IrmsStatusColors.rejected.light,
     _          => isDark ? IrmsColors.warningDark : IrmsColors.warning,
   };
+}
+
+class _MapControlButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _MapControlButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surface,
+      shape: const CircleBorder(),
+      elevation: 2,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Tooltip(
+          message: tooltip,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: Icon(icon, size: 20, color: theme.colorScheme.onSurface),
+          ),
+        ),
+      ),
+    );
+  }
 }

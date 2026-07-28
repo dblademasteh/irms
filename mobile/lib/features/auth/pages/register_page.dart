@@ -255,163 +255,166 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildForm(BuildContext context, ThemeData theme, AppLocalizations loc, AuthState state) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (MediaQuery.of(context).size.width <= 700) ...[
-          Text(
-            'Create Account',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-              color: theme.colorScheme.onSurface,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Join the incident response network',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
-          ),
-          const SizedBox(height: 32),
-        ],
-        _buildSectionHeader(theme, 'Personal Information', Icons.person_outline),
-        const SizedBox(height: 12),
-        _buildField(
-          controller: _nameCtrl,
-          label: loc.fieldFullName,
-          icon: Icons.person_outline,
-          validator: (v) => v != null && v.isNotEmpty ? null : loc.validationRequired,
-        ),
-        const SizedBox(height: 12),
-        _buildField(
-          controller: _phoneCtrl,
-          label: loc.fieldPhoneNumber,
-          icon: Icons.phone_outlined,
-          keyboardType: TextInputType.phone,
-          validator: (v) => v != null && v.isNotEmpty ? null : loc.validationRequired,
-        ),
-        const SizedBox(height: 24),
-        _buildSectionHeader(theme, 'Contact & Location', Icons.location_on_outlined),
-        const SizedBox(height: 12),
-        _buildField(
-          controller: _emailCtrl,
-          label: loc.fieldEmail,
-          icon: Icons.email_outlined,
-          keyboardType: TextInputType.emailAddress,
-          validator: (v) {
-            final val = v?.trim() ?? '';
-            if (val.isEmpty) return loc.validationRequired;
-            if (!val.contains('@') || !val.contains('.')) return loc.validationInvalidEmail;
-            return null;
-          },
-        ),
-        const SizedBox(height: 12),
-        _buildField(
-          controller: _addressCtrl,
-          label: loc.fieldAddressOptional,
-          icon: Icons.location_on_outlined,
-          keyboardType: TextInputType.streetAddress,
-        ),
-        const SizedBox(height: 24),
-        _buildSectionHeader(theme, 'Security', Icons.lock_outlined),
-        const SizedBox(height: 12),
-        _buildField(
-          controller: _passCtrl,
-          label: loc.fieldPassword,
-          icon: Icons.lock_outline,
-          obscure: _obscure,
-          suffix: IconButton(
-            icon: Icon(
-              _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              size: 20,
-            ),
-            onPressed: () => setState(() => _obscure = !_obscure),
-          ),
-          validator: (v) => v != null && v.length >= 8 ? null : loc.validationMin8Chars,
-        ),
-        const SizedBox(height: 12),
-        _buildField(
-          controller: _inviteCtrl,
-          label: loc.fieldInviteCodeOptional,
-          icon: Icons.vpn_key_outlined,
-          hint: loc.hintInviteCode,
-        ),
-        const SizedBox(height: 32),
-        if (state is AuthLoading)
-          Container(
-            height: 52,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Center(
-              child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.5,
-                  valueColor: AlwaysStoppedAnimation(Colors.white),
-                ),
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (MediaQuery.of(context).size.width <= 700) ...[
+            Text(
+              'Create Account',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w900,
+                color: theme.colorScheme.onSurface,
+                letterSpacing: -0.5,
               ),
             ),
-          )
-        else ...[
-          FilledButton(
-            onPressed: _submit,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.person_add, size: 20),
-                const SizedBox(width: 8),
-                Text(loc.btnCreateAccount),
-              ],
+            const SizedBox(height: 4),
+            Text(
+              'Join the incident response network',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
             ),
+            const SizedBox(height: 32),
+          ],
+          _buildSectionHeader(theme, 'Personal Information', Icons.person_outline),
+          const SizedBox(height: 12),
+          _buildField(
+            controller: _nameCtrl,
+            label: loc.fieldFullName,
+            icon: Icons.person_outline,
+            validator: (v) => v != null && v.isNotEmpty ? null : loc.validationRequired,
           ),
           const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: () => context.go('/login'),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.login, size: 18),
-                const SizedBox(width: 8),
-                Text(loc.btnSignIn),
-              ],
-            ),
+          _buildField(
+            controller: _phoneCtrl,
+            label: loc.fieldPhoneNumber,
+            icon: Icons.phone_outlined,
+            keyboardType: TextInputType.phone,
+            validator: (v) => v != null && v.isNotEmpty ? null : loc.validationRequired,
           ),
-        ],
-        const SizedBox(height: 24),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.15)),
+          const SizedBox(height: 24),
+          _buildSectionHeader(theme, 'Contact & Location', Icons.location_on_outlined),
+          const SizedBox(height: 12),
+          _buildField(
+            controller: _emailCtrl,
+            label: loc.fieldEmail,
+            icon: Icons.email_outlined,
+            keyboardType: TextInputType.emailAddress,
+            validator: (v) {
+              final val = v?.trim() ?? '';
+              if (val.isEmpty) return loc.validationRequired;
+              if (!val.contains('@') || !val.contains('.')) return loc.validationInvalidEmail;
+              return null;
+            },
           ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.shield_outlined,
-                size: 18,
-                color: theme.colorScheme.primary,
+          const SizedBox(height: 12),
+          _buildField(
+            controller: _addressCtrl,
+            label: loc.fieldAddressOptional,
+            icon: Icons.location_on_outlined,
+            keyboardType: TextInputType.streetAddress,
+          ),
+          const SizedBox(height: 24),
+          _buildSectionHeader(theme, 'Security', Icons.lock_outlined),
+          const SizedBox(height: 12),
+          _buildField(
+            controller: _passCtrl,
+            label: loc.fieldPassword,
+            icon: Icons.lock_outline,
+            obscure: _obscure,
+            suffix: IconButton(
+              icon: Icon(
+                _obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                size: 20,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'By creating an account, you agree to our terms of service and privacy policy.',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              onPressed: () => setState(() => _obscure = !_obscure),
+            ),
+            validator: (v) => v != null && v.length >= 8 ? null : loc.validationMin8Chars,
+          ),
+          const SizedBox(height: 12),
+          _buildField(
+            controller: _inviteCtrl,
+            label: loc.fieldInviteCodeOptional,
+            icon: Icons.vpn_key_outlined,
+            hint: loc.hintInviteCode,
+          ),
+          const SizedBox(height: 32),
+          if (state is AuthLoading)
+            Container(
+              height: 52,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.5,
+                    valueColor: AlwaysStoppedAnimation(Colors.white),
                   ),
                 ),
               ),
-            ],
+            )
+          else ...[
+            FilledButton(
+              onPressed: _submit,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.person_add, size: 20),
+                  const SizedBox(width: 8),
+                  Text(loc.btnCreateAccount),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton(
+              onPressed: () => context.go('/login'),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.login, size: 18),
+                  const SizedBox(width: 8),
+                  Text(loc.btnSignIn),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.15)),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.shield_outlined,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'By creating an account, you agree to our terms of service and privacy policy.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -454,6 +457,9 @@ class _RegisterPageState extends State<RegisterPage> {
       keyboardType: keyboardType,
       obscureText: obscure,
       validator: validator,
+      autocorrect: false,
+      enableSuggestions: false,
+      autofillHints: const <String>[],
       style: TextStyle(
         color: theme.colorScheme.onSurface,
         fontSize: 15,

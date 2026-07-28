@@ -86,6 +86,22 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  /// Like [restoreSession] but skips updating [routerRefreshNotifier].
+  /// Use this during app startup when the router is already bootstrapped
+  /// with the correct initial auth state — avoids "setState during build".
+  void restoreSessionSilent(Map<String, dynamic>? user) {
+    if (user != null) {
+      authNotifier.value = true;
+      roleNotifier.value = user['role'] ?? 'reporter';
+      _safeConnectSocket();
+      emit(Authenticated(user));
+    } else {
+      authNotifier.value = false;
+      _socketClient?.disconnect();
+      emit(Unauthenticated());
+    }
+  }
+
   Future<void> login({required String email, required String password}) async {
     emit(AuthLoading());
     try {

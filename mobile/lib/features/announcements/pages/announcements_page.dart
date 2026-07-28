@@ -17,11 +17,48 @@ class AnnouncementsPage extends StatefulWidget {
 
 class _AnnouncementsPageState extends State<AnnouncementsPage> {
   final List<Map<String, dynamic>> _announcements = [];
+  final List<Map<String, dynamic>> _nationalAdvisories = [];
   bool _loading = true;
   String? _error;
 
   late SocketClient _socket;
   String _selectedCategory = 'all';
+
+  Future<void> _loadNationalAdvisories() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final dio = context.read<DioClient>();
+      final resp = await dio.dio.get('/national-advisories');
+      final list = List<Map<String, dynamic>>.from(resp.data['advisories'] ?? []);
+      setState(() {
+        _nationalAdvisories.clear();
+        _nationalAdvisories.addAll(list.map((a) => {
+          'id': a['id'] ?? '',
+          'title': a['title'] ?? 'National Advisory',
+          'message': a['description'] ?? '',
+          'author': 'GDACS',
+          'category': 'national',
+          'timestamp': a['pubDate'] ?? '',
+          'isPinned': false,
+          'targetRole': 'all',
+          'link': a['link'] ?? '',
+        }));
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = 'Failed to load national advisories: $e';
+      });
+    }
+  }
+
+  void _onCategorySelected(String category) {
+    setState(() {
+      _selectedCategory = category;
+    });
+    _loadBroadcasts();
+  }
 
   @override
   void initState() {
@@ -38,6 +75,10 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
   }
 
   Future<void> _loadBroadcasts() async {
+    if (_selectedCategory == 'national') {
+      await _loadNationalAdvisories();
+      return;
+    }
     setState(() { _loading = true; _error = null; });
     try {
       final dio = context.read<DioClient>();
@@ -236,6 +277,8 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                 const SizedBox(height: 16),
                 TextField(
                   controller: msgCtrl,
+                  autocorrect: false, enableSuggestions: false,
+                  autofillHints: const <String>[],
                   maxLength: 500,
                   maxLines: 3,
                   decoration: InputDecoration(
@@ -318,7 +361,9 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
 
     final filteredList = _selectedCategory == 'all'
         ? _announcements
-        : _announcements.where((a) => a['category'] == _selectedCategory).toList();
+        : _selectedCategory == 'national'
+            ? _nationalAdvisories
+            : _announcements.where((a) => a['category'] == _selectedCategory).toList();
 
     return Scaffold(
       appBar: IrmsAppBar(
@@ -358,6 +403,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
     final earthquakeCount = _announcements.where((a) => a['category'] == 'earthquake').length;
     final floodCount = _announcements.where((a) => a['category'] == 'flood').length;
     final tsunamiCount = _announcements.where((a) => a['category'] == 'tsunami').length;
+    final nationalCount = _nationalAdvisories.length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,6 +441,8 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                 _buildDesktopFilterChip(theme, label: 'Flood', icon: Icons.water_outlined, categoryKey: 'flood', count: floodCount, color: Colors.cyan),
                 const SizedBox(width: 8),
                 _buildDesktopFilterChip(theme, label: 'Tsunami', icon: Icons.waves, categoryKey: 'tsunami', count: tsunamiCount, color: Colors.indigo),
+                const SizedBox(width: 8),
+                _buildDesktopFilterChip(theme, label: 'National Alerts', icon: Icons.public, categoryKey: 'national', count: nationalCount, color: Colors.blueGrey),
               ],
             ),
           ),
@@ -425,6 +473,7 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
                               _buildStatCard(theme, label: 'Earthquake', count: earthquakeCount, icon: Icons.vibration, color: Colors.brown),
                               _buildStatCard(theme, label: 'Flood', count: floodCount, icon: Icons.water_outlined, color: Colors.cyan),
                               _buildStatCard(theme, label: 'Tsunami', count: tsunamiCount, icon: Icons.waves, color: Colors.indigo),
+                              _buildStatCard(theme, label: 'National', count: nationalCount, icon: Icons.public, color: Colors.blueGrey),
                             ],
                           ),
                         ),
@@ -571,15 +620,16 @@ class _AnnouncementsPageState extends State<AnnouncementsPage> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _SegmentTab(theme: theme, label: 'All', icon: Icons.campaign_outlined, isSelected: _selectedCategory == 'all', onTap: () => setState(() => _selectedCategory = 'all')),
-                _SegmentTab(theme: theme, label: 'Emergency', icon: Icons.warning_amber_rounded, isSelected: _selectedCategory == 'emergency', onTap: () => setState(() => _selectedCategory = 'emergency')),
-                _SegmentTab(theme: theme, label: 'System', icon: Icons.settings_outlined, isSelected: _selectedCategory == 'system', onTap: () => setState(() => _selectedCategory = 'system')),
-                _SegmentTab(theme: theme, label: 'Safety', icon: Icons.health_and_safety_outlined, isSelected: _selectedCategory == 'safety', onTap: () => setState(() => _selectedCategory = 'safety')),
-                _SegmentTab(theme: theme, label: 'Traffic', icon: Icons.traffic_outlined, isSelected: _selectedCategory == 'traffic', onTap: () => setState(() => _selectedCategory = 'traffic')),
-                _SegmentTab(theme: theme, label: 'Weather', icon: Icons.cloud_outlined, isSelected: _selectedCategory == 'weather', onTap: () => setState(() => _selectedCategory = 'weather')),
-                _SegmentTab(theme: theme, label: 'Earthquake', icon: Icons.vibration, isSelected: _selectedCategory == 'earthquake', onTap: () => setState(() => _selectedCategory = 'earthquake')),
-                _SegmentTab(theme: theme, label: 'Flood', icon: Icons.water_outlined, isSelected: _selectedCategory == 'flood', onTap: () => setState(() => _selectedCategory = 'flood')),
-                _SegmentTab(theme: theme, label: 'Tsunami', icon: Icons.waves, isSelected: _selectedCategory == 'tsunami', onTap: () => setState(() => _selectedCategory = 'tsunami')),
+                _SegmentTab(theme: theme, label: 'All', icon: Icons.campaign_outlined, isSelected: _selectedCategory == 'all', onTap: () => _onCategorySelected('all')),
+                _SegmentTab(theme: theme, label: 'Emergency', icon: Icons.warning_amber_rounded, isSelected: _selectedCategory == 'emergency', onTap: () => _onCategorySelected('emergency')),
+                _SegmentTab(theme: theme, label: 'System', icon: Icons.settings_outlined, isSelected: _selectedCategory == 'system', onTap: () => _onCategorySelected('system')),
+                _SegmentTab(theme: theme, label: 'Safety', icon: Icons.health_and_safety_outlined, isSelected: _selectedCategory == 'safety', onTap: () => _onCategorySelected('safety')),
+                _SegmentTab(theme: theme, label: 'Traffic', icon: Icons.traffic_outlined, isSelected: _selectedCategory == 'traffic', onTap: () => _onCategorySelected('traffic')),
+                _SegmentTab(theme: theme, label: 'Weather', icon: Icons.cloud_outlined, isSelected: _selectedCategory == 'weather', onTap: () => _onCategorySelected('weather')),
+                _SegmentTab(theme: theme, label: 'Earthquake', icon: Icons.vibration, isSelected: _selectedCategory == 'earthquake', onTap: () => _onCategorySelected('earthquake')),
+                _SegmentTab(theme: theme, label: 'Flood', icon: Icons.water_outlined, isSelected: _selectedCategory == 'flood', onTap: () => _onCategorySelected('flood')),
+                _SegmentTab(theme: theme, label: 'Tsunami', icon: Icons.waves, isSelected: _selectedCategory == 'tsunami', onTap: () => _onCategorySelected('tsunami')),
+                _SegmentTab(theme: theme, label: 'National', icon: Icons.public, isSelected: _selectedCategory == 'national', onTap: () => _onCategorySelected('national')),
               ],
             ),
           ),

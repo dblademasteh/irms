@@ -125,6 +125,7 @@ class _AdminPageState extends State<AdminPage> {
   Widget _buildNarrowLayout(ThemeData theme) {
     return Column(
       children: [
+        _buildStatHeader(theme),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -142,6 +143,32 @@ class _AdminPageState extends State<AdminPage> {
         ),
         Expanded(child: _buildContent(theme)),
       ],
+    );
+  }
+
+  Widget _buildStatHeader(ThemeData theme) {
+    return BlocBuilder<AdminCubit, AdminState>(
+      buildWhen: (prev, curr) {
+        final prevAnalytics = prev is AdminLoaded ? prev.analytics : (prev is AdminError ? prev.previousAnalytics ?? {} : <String, dynamic>{});
+        final currAnalytics = curr is AdminLoaded ? curr.analytics : (curr is AdminError ? curr.previousAnalytics ?? {} : <String, dynamic>{});
+        return prevAnalytics != currAnalytics;
+      },
+      builder: (ctx, state) {
+        Map<String, dynamic> analytics = {};
+        if (state is AdminLoaded) analytics = state.analytics;
+        else if (state is AdminError) analytics = state.previousAnalytics ?? {};
+        if (analytics.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Row(
+            children: [
+              Expanded(child: _StatCard(title: 'Users', value: analytics['totalUsers'].toString(), icon: Icons.people, color: Colors.blue)),
+              const SizedBox(width: 12),
+              Expanded(child: _StatCard(title: 'Incidents', value: analytics['totalIncidents'].toString(), icon: Icons.report, color: Colors.orange)),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -365,6 +392,8 @@ class _AdminPageState extends State<AdminPage> {
               const SizedBox(height: 24),
               TextField(
                 controller: nameCtrl,
+                autocorrect: false, enableSuggestions: false,
+                autofillHints: const <String>[],
                 decoration: InputDecoration(
                   labelText: 'Barangay Name',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
@@ -373,6 +402,8 @@ class _AdminPageState extends State<AdminPage> {
               const SizedBox(height: 16),
               TextField(
                 controller: psgcCtrl,
+                autocorrect: false, enableSuggestions: false,
+                autofillHints: const <String>[],
                 decoration: InputDecoration(
                   labelText: 'PSGC Code (optional)',
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
@@ -571,14 +602,6 @@ class _AnalyticsView extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
-        Row(
-          children: [
-            Expanded(child: _StatCard(title: 'Total Users', value: analytics['totalUsers'].toString(), icon: Icons.people, color: Colors.blue)),
-            const SizedBox(width: 16),
-            Expanded(child: _StatCard(title: 'Total Incidents', value: analytics['totalIncidents'].toString(), icon: Icons.report, color: Colors.orange)),
-          ],
-        ),
-        const SizedBox(height: 24),
         if (onExport != null)
           SizedBox(
             width: double.infinity,
@@ -919,6 +942,8 @@ class _UsersViewState extends State<_UsersView> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: TextField(
             controller: _searchCtrl,
+            autocorrect: false, enableSuggestions: false,
+            autofillHints: const <String>[],
             onChanged: (v) => setState(() => _query = v),
             decoration: InputDecoration(
               hintText: 'Search by name, email, or phone...',
@@ -1509,6 +1534,8 @@ class _UserCard extends StatelessWidget {
             TextField(
               controller: passCtrl,
               obscureText: true,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'New Password',
                 prefixIcon: const Icon(Icons.lock_outline, size: 20),
@@ -2159,6 +2186,8 @@ class _IncidentAdminCard extends StatelessWidget {
               controller: ctrl,
               maxLength: 500,
               maxLines: 4,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'Broadcast Message',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -2229,6 +2258,8 @@ class _IncidentAdminCard extends StatelessWidget {
               controller: ctrl,
               maxLength: 300,
               maxLines: 3,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'Notification Content',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -2528,6 +2559,8 @@ class _BroadcastSheetBodyState extends State<_BroadcastSheetBody> {
             controller: widget.ctrl,
             maxLength: 500,
             maxLines: 4,
+            autocorrect: false, enableSuggestions: false,
+            autofillHints: const <String>[],
             decoration: InputDecoration(
               hintText: 'Enter emergency alert or system message...',
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -2647,6 +2680,8 @@ void _showAddUnitSheet(BuildContext context) {
             const SizedBox(height: 20),
             TextField(
               controller: nameCtrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'Unit Name / Call Sign',
                 hintText: 'e.g. Fire Engine 1, Ambulance Medic 2',

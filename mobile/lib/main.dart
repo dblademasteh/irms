@@ -56,6 +56,15 @@ void main() async {
     }
   }
 
+  // Pre-initialize notifiers BEFORE runApp so the router is already
+  // bootstrapped with the correct auth state. This means restoreSession
+  // does NOT need to fire routerRefreshNotifier during the first build.
+  if (user != null) {
+    authNotifier.value = true;
+    roleNotifier.value = user['role'] ?? 'reporter';
+    routerRefreshNotifier.value = true;
+  }
+
   final router = createRouter(user != null);
   final localeCubit = LocaleCubit();
   final themeCubit = ThemeCubit();
@@ -75,7 +84,12 @@ void main() async {
       child: MultiBlocProvider(
         providers: [
           BlocProvider(
-            create: (_) => AuthCubit(authRepo, storage, socketClient)..restoreSession(user),
+            create: (_) {
+              // restoreSessionSilent syncs the cubit state without firing
+              // routerRefreshNotifier (already bootstrapped above before runApp).
+              return AuthCubit(authRepo, storage, socketClient)
+                ..restoreSessionSilent(user);
+            },
           ),
           BlocProvider.value(value: localeCubit),
           BlocProvider.value(value: themeCubit),

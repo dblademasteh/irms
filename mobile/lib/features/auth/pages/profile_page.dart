@@ -298,6 +298,8 @@ _buildSection(
             width: 200,
             child: TextField(
               controller: _nameCtrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
               decoration: InputDecoration(
@@ -1035,6 +1037,8 @@ class _PinSetupSheetState extends State<_PinSetupSheet> {
                         ] else ...[
                           TextField(
                             onChanged: (v) => setState(() => _pin = v.replaceAll(RegExp(r'\D'), '')),
+                            autocorrect: false, enableSuggestions: false,
+                            autofillHints: const <String>[],
                             keyboardType: TextInputType.number,
                             maxLength: 4,
                             textAlign: TextAlign.center,
@@ -1052,6 +1056,8 @@ class _PinSetupSheetState extends State<_PinSetupSheet> {
                           const SizedBox(height: 16),
                           TextField(
                             onChanged: (v) => setState(() => _confirm = v.replaceAll(RegExp(r'\D'), '')),
+                            autocorrect: false, enableSuggestions: false,
+                            autofillHints: const <String>[],
                             keyboardType: TextInputType.number,
                             maxLength: 4,
                             textAlign: TextAlign.center,
@@ -1514,6 +1520,8 @@ class _TwoFactorSetupSheetState extends State<_TwoFactorSetupSheet> {
                             const SizedBox(height: 24),
                             TextField(
                               onChanged: (v) => setState(() { _code = v.replaceAll(RegExp(r'\D'), ''); }),
+                              autocorrect: false, enableSuggestions: false,
+                              autofillHints: const <String>[],
                               keyboardType: TextInputType.number,
                               maxLength: 6,
                               textAlign: TextAlign.center,
@@ -2065,7 +2073,7 @@ class _EditableInfoCard extends StatelessWidget {
       ),
       title: Text(loc.profileFullName, style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w600)),
       subtitle: isEditing
-          ? TextField(controller: nameCtrl, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), decoration: const InputDecoration(isDense: true, border: InputBorder.none))
+          ? TextField(controller: nameCtrl, autocorrect: false, enableSuggestions: false, autofillHints: const <String>[], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), decoration: const InputDecoration(isDense: true, border: InputBorder.none))
           : Text(nameCtrl.text.isEmpty ? loc.fallbackUnknown : nameCtrl.text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
     );
   }
@@ -2080,7 +2088,7 @@ class _EditableInfoCard extends StatelessWidget {
       ),
       title: Text(loc.profilePhoneNumber, style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w600)),
       subtitle: isEditing
-          ? TextField(controller: phoneCtrl, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), decoration: InputDecoration(isDense: true, border: InputBorder.none, hintText: loc.fallbackNotProvided))
+          ? TextField(controller: phoneCtrl, autocorrect: false, enableSuggestions: false, autofillHints: const <String>[], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), decoration: InputDecoration(isDense: true, border: InputBorder.none, hintText: loc.fallbackNotProvided))
           : Text(phoneCtrl.text.isEmpty ? loc.fallbackNotProvided : phoneCtrl.text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
     );
   }
@@ -2095,7 +2103,7 @@ class _EditableInfoCard extends StatelessWidget {
       ),
       title: Text(loc.profileAddress, style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.5), fontWeight: FontWeight.w600)),
       subtitle: isEditing
-          ? TextField(controller: addressCtrl, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), decoration: InputDecoration(isDense: true, border: InputBorder.none, hintText: loc.fallbackNotProvided))
+          ? TextField(controller: addressCtrl, autocorrect: false, enableSuggestions: false, autofillHints: const <String>[], style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600), decoration: InputDecoration(isDense: true, border: InputBorder.none, hintText: loc.fallbackNotProvided))
           : Text(addressCtrl.text.isEmpty ? loc.fallbackNotProvided : addressCtrl.text, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
     );
   }
@@ -3076,6 +3084,9 @@ class _PasswordField extends StatelessWidget {
       controller: controller,
       obscureText: !show,
       onChanged: onChanged,
+      autocorrect: false,
+      enableSuggestions: false,
+      autofillHints: const <String>[],
       decoration: InputDecoration(
         labelText: label,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),

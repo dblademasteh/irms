@@ -42,6 +42,8 @@ class _TrackPageState extends State<TrackPage> {
               const SizedBox(height: 28),
               TextFormField(
                 controller: _codeCtrl,
+                autocorrect: false, enableSuggestions: false,
+                autofillHints: const <String>[],
                 textCapitalization: TextCapitalization.characters,
                 decoration: InputDecoration(
                   labelText: 'TRACKING CODE',

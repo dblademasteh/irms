@@ -4,6 +4,7 @@ import '../../../app/theme.dart';
 import '../../../core/app_toast.dart';
 import '../../../core/map_launcher.dart';
 import '../../../core/dio_client.dart';
+import '../../../core/socket_client.dart';
 import 'package:intl/intl.dart';
 import '../cubit/dispatcher_incident_cubit.dart';
 import '../../incidents/widgets/ai_incident_analysis_card.dart';
@@ -25,6 +26,13 @@ class _DispatcherIncidentDetailPageState extends State<DispatcherIncidentDetailP
     super.initState();
     context.read<DispatcherIncidentCubit>().loadIncident();
     _loadActionLog();
+    try { context.read<SocketClient>().trackIncident(widget.id); } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    try { context.read<SocketClient>().untrackIncident(widget.id); } catch (_) {}
+    super.dispose();
   }
 
   Future<void> _loadActionLog() async {
@@ -52,7 +60,8 @@ class _DispatcherIncidentDetailPageState extends State<DispatcherIncidentDetailP
             onPressed: () {
               final state = context.read<DispatcherIncidentCubit>().state;
               final userId = state is DispatcherIncidentLoaded ? state.currentUserId : null;
-              showIncidentChatSheet(context, incidentId: widget.id, currentUserId: userId, role: 'dispatcher');
+              final inc = state is DispatcherIncidentLoaded ? state.incident : null;
+              showIncidentChatSheet(context, incidentId: widget.id, currentUserId: userId, role: 'dispatcher', incident: inc);
             },
           ),
           IconButton(
@@ -566,6 +575,8 @@ class _DispatcherIncidentDetailPageState extends State<DispatcherIncidentDetailP
                       const SizedBox(height: 8),
                       TextField(
                         controller: ctrl,
+                        autocorrect: false, enableSuggestions: false,
+                        autofillHints: const <String>[],
                         maxLines: 2,
                         decoration: InputDecoration(
                           hintText: 'e.g., Firetruck dispatched to location',
@@ -630,6 +641,8 @@ class _DispatcherIncidentDetailPageState extends State<DispatcherIncidentDetailP
             const SizedBox(height: 24),
             TextField(
               controller: ctrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Resolution notes (e.g., Fire extinguished, scene cleared)',
@@ -683,6 +696,8 @@ class _DispatcherIncidentDetailPageState extends State<DispatcherIncidentDetailP
             const SizedBox(height: 24),
             TextField(
               controller: ctrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Reason for rejection (e.g., Prank call, duplicate)',
@@ -740,6 +755,8 @@ class _DispatcherIncidentDetailPageState extends State<DispatcherIncidentDetailP
             const SizedBox(height: 24),
             TextField(
               controller: ctrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: 'Reason for declining (e.g., Outside jurisdiction, insufficient info)',

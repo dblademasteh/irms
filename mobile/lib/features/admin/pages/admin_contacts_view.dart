@@ -135,6 +135,8 @@ class _AdminContactsViewState extends State<AdminContactsView> {
             const SizedBox(height: 24),
             TextField(
               controller: nameCtrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'Category Name',
                 hintText: 'e.g. Police Station',
@@ -145,6 +147,8 @@ class _AdminContactsViewState extends State<AdminContactsView> {
             const SizedBox(height: 16),
             TextField(
               controller: colorCtrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'Color (hex)',
                 hintText: '#2563EB',
@@ -155,6 +159,8 @@ class _AdminContactsViewState extends State<AdminContactsView> {
             const SizedBox(height: 16),
             TextField(
               controller: orderCtrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'Sort Order',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -368,6 +374,8 @@ void _showContactSheet(BuildContext context, {Map<String, dynamic>? contact, Lis
             const SizedBox(height: 24),
             TextField(
               controller: nameCtrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'Name',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -377,6 +385,8 @@ void _showContactSheet(BuildContext context, {Map<String, dynamic>? contact, Lis
             const SizedBox(height: 16),
             TextField(
               controller: phoneCtrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'Phone Number',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
@@ -387,6 +397,8 @@ void _showContactSheet(BuildContext context, {Map<String, dynamic>? contact, Lis
             const SizedBox(height: 16),
             TextField(
               controller: deptCtrl,
+              autocorrect: false, enableSuggestions: false,
+              autofillHints: const <String>[],
               decoration: InputDecoration(
                 labelText: 'Department (e.g. Police, Fire, Medical)',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),

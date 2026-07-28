@@ -73,6 +73,8 @@ class _LoginPageState extends State<LoginPage> {
           }
           if (state is Unauthenticated && state.error != null) {
             AppToast.error(ctx, state.error ?? loc.errorLoginFailed);
+            // Clear PIN/OTP field on failed login so user can re-enter cleanly
+            if (_loginMode == 2) _otpCtrl.clear();
           }
         },
         builder: (ctx, state) {
@@ -396,7 +398,7 @@ class _LoginPageState extends State<LoginPage> {
             controller: _emailCtrl,
             label: loc.fieldEmail,
             icon: Icons.email_outlined,
-            keyboardType: TextInputType.emailAddress,
+            keyboardType: TextInputType.visiblePassword,
             validator: (v) => v != null && v.contains('@') ? null : loc.validationInvalidEmail,
           ),
           const SizedBox(height: 16),
@@ -439,7 +441,7 @@ class _LoginPageState extends State<LoginPage> {
               controller: _emailCtrl,
               label: 'Email',
               icon: Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
+              keyboardType: TextInputType.visiblePassword,
               validator: (v) => v != null && v.contains('@') ? null : 'Enter a valid email',
             ),
             const SizedBox(height: 16),
@@ -452,10 +454,21 @@ class _LoginPageState extends State<LoginPage> {
             textAlign: TextAlign.center,
             obscureText: true,
             obscuringCharacter: '●',
+            autocorrect: false,
+            enableSuggestions: false,
+            autofillHints: const <String>[],
             style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 12),
+            onChanged: (v) {
+              // Auto-submit when all 4 digits are entered
+              if (v.length == 4) _submit();
+            },
             decoration: InputDecoration(
-              hintText: '●●●●',
-              hintStyle: TextStyle(color: theme.colorScheme.outline.withValues(alpha: 0.3), letterSpacing: 12),
+              hintText: '_ _ _ _',
+              hintStyle: TextStyle(
+                color: theme.colorScheme.outline.withValues(alpha: 0.3),
+                letterSpacing: 8,
+                fontSize: 20,
+              ),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
               counterText: '',
               prefixIcon: const Icon(Icons.pin_outlined, size: 20),
@@ -466,7 +479,7 @@ class _LoginPageState extends State<LoginPage> {
             controller: _phoneCtrl,
             label: 'Phone Number',
             icon: Icons.phone_outlined,
-            keyboardType: TextInputType.phone,
+            keyboardType: TextInputType.visiblePassword,
             validator: (v) => v != null && v.length >= 8 ? null : 'Enter a valid phone number',
           ),
         ],
@@ -599,9 +612,11 @@ class _LoginPageState extends State<LoginPage> {
           setState(() {
             _loginMode = mode;
             if (mode != 1) { _otpSent = false; }
-            if (mode != 2) { _otpCtrl.clear(); }
+            // Always clear _otpCtrl INSIDE setState so the PIN TextField
+            // rebuilds with empty text — prevents stale 4-digit OTP content
+            // from triggering an auto-submit on the PIN field.
+            _otpCtrl.clear();
           });
-          if (mode == 2) { _otpCtrl.clear(); }
         },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
@@ -637,6 +652,9 @@ class _LoginPageState extends State<LoginPage> {
       keyboardType: keyboardType,
       obscureText: obscure,
       validator: validator,
+      autocorrect: false,
+      enableSuggestions: false,
+      autofillHints: const <String>[],
       style: TextStyle(
         color: theme.colorScheme.onSurface,
         fontSize: 15,
@@ -786,7 +804,9 @@ class _LoginPageState extends State<LoginPage> {
               if (step == 1) ...[
                 TextField(
                   controller: emailCtrl,
-                  keyboardType: TextInputType.emailAddress,
+                  keyboardType: TextInputType.visiblePassword,
+                  autocorrect: false, enableSuggestions: false,
+                  autofillHints: const <String>[],
                   decoration: InputDecoration(
                     labelText: 'Email Address',
                     prefixIcon: const Icon(Icons.email_outlined, size: 20),
@@ -796,7 +816,9 @@ class _LoginPageState extends State<LoginPage> {
               ] else ...[
                 TextField(
                   controller: codeCtrl,
-                  keyboardType: TextInputType.number,
+                  keyboardType: TextInputType.visiblePassword,
+                  autocorrect: false, enableSuggestions: false,
+                  autofillHints: const <String>[],
                   maxLength: 6,
                   decoration: InputDecoration(
                     labelText: '6-digit Verification Code',
@@ -809,6 +831,8 @@ class _LoginPageState extends State<LoginPage> {
                 TextField(
                   controller: newPassCtrl,
                   obscureText: true,
+                  autocorrect: false, enableSuggestions: false,
+                  autofillHints: const <String>[],
                   decoration: InputDecoration(
                     labelText: 'New Password (min 8 chars)',
                     prefixIcon: const Icon(Icons.lock_outline, size: 20),
@@ -949,6 +973,8 @@ class _TwoFaChallengeWidgetState extends State<_TwoFaChallengeWidget> {
         TextField(
           onChanged: (v) => setState(() { _code = v.replaceAll(RegExp(r'\D'), ''); }),
           keyboardType: TextInputType.number,
+          autocorrect: false, enableSuggestions: false,
+          autofillHints: const <String>[],
           maxLength: 6,
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 10),
@@ -1060,6 +1086,8 @@ class _OtpVerifyWidgetState extends State<_OtpVerifyWidget> {
         TextField(
           onChanged: (v) => setState(() => _code = v.replaceAll(RegExp(r'\D'), '')),
           keyboardType: TextInputType.number,
+          autocorrect: false, enableSuggestions: false,
+          autofillHints: const <String>[],
           maxLength: 6,
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, letterSpacing: 12),

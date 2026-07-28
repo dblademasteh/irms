@@ -295,7 +295,9 @@ class AdminCubit extends Cubit<AdminState> {
       units = current.previousUnits ?? [];
     }
 
-    emit(AdminLoading());
+    if (current is! AdminLoaded && current is! AdminError) {
+      emit(AdminLoading());
+    }
     try {
       await action(users, analytics, contacts, categories, inviteCodes, barangays, incidents, units);
     } catch (e) {

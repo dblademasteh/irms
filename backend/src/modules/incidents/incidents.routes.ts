@@ -4,8 +4,9 @@ import { authGuard, optionalAuthGuard } from "../common/auth-guard.js";
 import { errors } from "../common/errors.js";
 import * as repo from "./incidents.repo.js";
 import * as chatsRepo from "./chats.repo.js";
+import * as authRepo from "../auth/auth.repo.js";
 import { notifyDispatchers } from "../notifications/notifications.repo.js";
-import { emitQueueNew, emitQueueUpdate, emitIncidentStatus, emitUnitDispatched, emitNewChatMessage } from "../realtime/realtime.js";
+import { emitQueueNew, emitQueueUpdate, emitIncidentStatus, emitUnitDispatched, emitNewChatMessage, emitChatToQueue } from "../realtime/realtime.js";
 import { listForExport } from "./incidents.repo.js";
 import { classifyIncidentText } from "./ai-classifier.service.js";
 import { analyzeIncidentReport, handleAiChatQuery } from "./ai.service.js";
@@ -463,9 +464,14 @@ export async function registerIncidentRoutes(app: FastifyInstance) {
 
   app.get(
     "/incidents/:id/messages",
-    { preHandler: authGuard(["dispatcher", "admin", "citizen"]) },
+    { preHandler: authGuard(["reporter", "dispatcher", "admin"]) },
     async (req, reply) => {
       const { id } = req.params as any;
+      const incident = await repo.getById(id);
+      if (!incident) throw errors.notFound("Incident not found");
+      if (req.user!.role === "reporter" && incident.reporter_id !== req.user!.userId) {
+        throw errors.forbidden("Not your incident");
+      }
       const messages = await chatsRepo.getIncidentMessages(id);
       return reply.send({ messages });
     }
@@ -473,22 +479,39 @@ export async function registerIncidentRoutes(app: FastifyInstance) {
 
   app.post(
     "/incidents/:id/messages",
-    { preHandler: authGuard(["dispatcher", "admin", "citizen"]) },
+    { preHandler: authGuard(["reporter", "dispatcher", "admin"]) },
     async (req, reply) => {
       const { id } = req.params as any;
       const body = z.object({ message: z.string().min(1).max(2000) }).parse(req.body);
       const incident = await repo.getById(id);
       if (!incident) throw errors.notFound("Incident not found");
+      if (req.user!.role === "reporter" && incident.reporter_id !== req.user!.userId) {
+        throw errors.forbidden("Not your incident");
+      }
+
+      const user = await authRepo.findById(req.user!.userId);
+      const senderName = user?.name || (req.user!.role === "dispatcher" ? "Dispatcher" : req.user!.role === "admin" ? "Admin" : "Reporter");
+      const senderRole = req.user!.role === "reporter" ? "citizen" : req.user!.role;
 
       const chatMsg = await chatsRepo.addChatMessage({
         incidentId: id,
         senderId: req.user!.userId,
-        senderName: req.user!.role === "dispatcher" ? "Dispatcher" : req.user!.role === "admin" ? "Admin" : "Reporter",
-        senderRole: req.user!.role,
+        senderName,
+        senderRole,
         message: body.message,
       });
 
       emitNewChatMessage(id, chatMsg);
+
+      if (req.user!.role === "reporter") {
+        emitChatToQueue({ ...chatMsg, incidentId: id });
+        await notifyDispatchers({
+          incidentId: id,
+          title: "New Chat Message",
+          body: `Reporter sent a message on incident "${incident.title}"`,
+        });
+      }
+
       return reply.code(201).send({ message: chatMsg });
     }
   );

@@ -690,6 +690,8 @@ class _ChatComposer extends StatelessWidget {
             Expanded(
               child: TextField(
                 controller: controller,
+                autocorrect: false, enableSuggestions: false,
+                autofillHints: const <String>[],
                 minLines: 1,
                 maxLines: 4,
                 textInputAction: TextInputAction.send,
@@ -776,40 +778,53 @@ class _InlineLiveChatViewState extends State<_InlineLiveChatView> {
   List<ChatMessageModel> _messages = [];
   bool _loading = false;
   bool _sending = false;
+  SocketClient? _socket;
+
+  void _onChatMessage(dynamic data) {
+    if (!mounted || data == null || data is! Map<String, dynamic>) return;
+    final msg = ChatMessageModel.fromJson(data);
+    setState(() => _messages.add(msg));
+    _scrollToBottom();
+  }
 
   @override
   void initState() {
     super.initState();
     _fetch();
-    _initSocket();
+    _setupSocket();
   }
 
   @override
   void didUpdateWidget(covariant _InlineLiveChatView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.incidentId != widget.incidentId) {
+      _removeSocket();
       _fetch();
-      _initSocket();
+      _setupSocket();
     }
   }
 
   @override
   void dispose() {
+    _removeSocket();
     _ctrl.dispose();
     _scrollCtrl.dispose();
     super.dispose();
   }
 
-  void _initSocket() {
+  void _setupSocket() {
     try {
-      final socket = context.read<SocketClient>();
-      socket.trackIncident(widget.incidentId);
-      socket.onNewChatMessage((data) {
-        if (!mounted || data == null || data is! Map<String, dynamic>) return;
-        final msg = ChatMessageModel.fromJson(data);
-        setState(() => _messages.add(msg));
-        _scrollToBottom();
-      });
+      _socket = context.read<SocketClient>();
+      _socket!.trackIncident(widget.incidentId);
+      _socket!.onNewChatMessage(_onChatMessage);
+    } catch (_) {}
+  }
+
+  void _removeSocket() {
+    try {
+      _socket?.offNewChatMessage(_onChatMessage);
+      _socket?.untrackIncident(widget.incidentId);
+      _socket = null;
     } catch (_) {}
   }
 
